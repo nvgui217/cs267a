@@ -1,0 +1,69 @@
+2025-06-14 21:56:22,680 - __main__ - INFO - ================================================================================
+2025-06-14 21:56:22,680 - __main__ - INFO - CS 267A - MovieLens Recommender System Implementation
+2025-06-14 21:56:22,680 - __main__ - INFO - Baseline: PMF with scikit-surprise
+2025-06-14 21:56:22,680 - __main__ - INFO - Medium Goal: BPR-MF with implicit library
+2025-06-14 21:56:22,680 - __main__ - INFO - ================================================================================
+2025-06-14 21:56:22,696 - __main__ - INFO - 
+==================================================
+2025-06-14 21:56:22,696 - __main__ - INFO - Step 1: Loading MovieLens-100K Dataset
+2025-06-14 21:56:22,696 - __main__ - INFO - ==================================================
+2025-06-14 21:56:22,697 - src.data_loader - INFO - Loading MovieLens-100K ratings...
+2025-06-14 21:56:22,748 - src.data_loader - INFO - Loaded 100,000 ratings from 943 users and 1,682 items
+2025-06-14 21:56:22,755 - src.data_loader - INFO - Train size: 80,000, Test size: 20,000
+2025-06-14 21:56:22,881 - src.data_loader - INFO - Converting to implicit feedback (threshold >= 3.0)...
+2025-06-14 21:56:22,937 - src.data_loader - INFO - Implicit matrices created - Shape: (943, 1682), Train interactions: 65,988, Test interactions: 16,532
+2025-06-14 21:56:22,937 - src.data_loader - INFO - Loading movie metadata with genres...
+2025-06-14 21:56:23,121 - src.data_loader - INFO - Loaded metadata for 1,682 movies
+2025-06-14 21:56:23,123 - __main__ - INFO - 
+Dataset Statistics:
+2025-06-14 21:56:23,124 - __main__ - INFO - Total ratings: 100,000
+2025-06-14 21:56:23,124 - __main__ - INFO - Train ratings: 80,000
+2025-06-14 21:56:23,124 - __main__ - INFO - Test ratings: 20,000
+2025-06-14 21:56:23,126 - __main__ - INFO - Number of users: 943
+2025-06-14 21:56:23,127 - __main__ - INFO - Number of items: 1,682
+2025-06-14 21:56:23,127 - __main__ - INFO - 
+==================================================
+2025-06-14 21:56:23,127 - __main__ - INFO - Step 2: Training PMF Model (Baseline)
+2025-06-14 21:56:23,128 - __main__ - INFO - ==================================================
+2025-06-14 21:56:23,128 - __main__ - INFO - PMF Hyperparameters:
+2025-06-14 21:56:23,128 - __main__ - INFO -   - n_factors: 50
+2025-06-14 21:56:23,129 - __main__ - INFO -   - n_epochs: 20
+2025-06-14 21:56:23,129 - __main__ - INFO -   - learning_rate: 0.005
+2025-06-14 21:56:23,129 - __main__ - INFO -   - regularization: 0.02
+2025-06-14 21:56:23,130 - src.models - INFO - Training PMF model...
+2025-06-14 21:56:23,970 - src.models - INFO - PMF training completed
+2025-06-14 21:56:23,970 - __main__ - INFO - 
+Evaluating PMF model...
+2025-06-14 21:56:24,080 - __main__ - INFO - PMF Results:
+2025-06-14 21:56:24,080 - __main__ - INFO -   - RMSE: 0.9434
+2025-06-14 21:56:24,080 - __main__ - INFO -   - MAE: 0.7410
+2025-06-14 21:56:24,080 - __main__ - INFO - 
+==================================================
+2025-06-14 21:56:24,080 - __main__ - INFO - Step 3: Training BPR-MF Model (Medium Goal)
+2025-06-14 21:56:24,080 - __main__ - INFO - ==================================================
+2025-06-14 21:56:24,080 - __main__ - INFO - BPR-MF Hyperparameters:
+2025-06-14 21:56:24,080 - __main__ - INFO -   - factors: 50
+2025-06-14 21:56:24,080 - __main__ - INFO -   - iterations: 100
+2025-06-14 21:56:24,080 - __main__ - INFO -   - learning_rate: 0.01
+2025-06-14 21:56:24,080 - __main__ - INFO -   - regularization: 0.01
+2025-06-14 21:56:24,080 - src.models - INFO - Training BPR-MF model...
+2025-06-14 21:56:24,771 - src.models - INFO - BPR-MF training completed
+2025-06-14 21:56:24,771 - __main__ - INFO - 
+Evaluating BPR-MF model...
+2025-06-14 21:56:24,774 - __main__ - INFO - Evaluating BPR-MF on rating prediction task...
+2025-06-14 21:56:25,107 - __main__ - INFO - BPR-MF RMSE on rating prediction: 1.5621
+2025-06-14 21:56:25,655 - __main__ - INFO - BPR-MF Precision@10: 0.0191
+2025-06-14 21:56:25,655 - __main__ - INFO - 
+==================================================
+2025-06-14 21:56:25,655 - __main__ - INFO - Medium Goal Verification
+2025-06-14 21:56:25,655 - __main__ - INFO - ==================================================
+2025-06-14 21:56:25,655 - __main__ - INFO - PMF RMSE: 0.9434
+2025-06-14 21:56:25,655 - __main__ - INFO - BPR-MF RMSE (equivalent): 1.5621
+2025-06-14 21:56:25,655 - __main__ - INFO - Note: BPR-MF is optimized for ranking, not rating prediction
+2025-06-14 21:56:26,539 - __main__ - INFO - For comparison - PMF Precision@10: 0.1630
+2025-06-14 21:56:26,539 - __main__ - INFO - BPR-MF Precision@10: 0.0191
+2025-06-14 21:56:26,539 - __main__ - INFO - 
+==================================================
+2025-06-14 21:56:26,539 - __main__ - INFO - Step 4: Creating Visualizations
+2025-06-14 21:56:26,539 - __main__ - INFO - ==================================================
+2025-06-14 21:56:26,549 - __main__ - INFO - Creating item-factor scatter plot colored by genre...

@@ -1,0 +1,28 @@
+data:
+  movielens_path: "data/raw/ml-100k"
+  test_size: 0.2
+  random_state: 42
+  implicit_threshold: 3.0  # Ratings >= 3 are considered positive
+
+models:
+  pmf:
+    n_factors: 50  # As required by baseline
+    n_epochs: 20
+    lr_all: 0.005
+    reg_all: 0.02
+    random_state: 42
+    
+  bpr:
+    factors: 50
+    iterations: 100
+    learning_rate: 0.01
+    regularization: 0.01
+    random_state: 42
+
+evaluation:
+  k_values: [10]  # For Precision@K
+  
+output:
+  save_models: true
+  save_plots: true
+  results_dir: "results"
