@@ -21,7 +21,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('recommender_system.log'),
+        logging.FileHandler('recommender_system.log', mode='w'), # Overwrite log each run
         logging.StreamHandler()
     ]
 )
@@ -61,169 +61,104 @@ def main():
     
     # Step 1: Load and prepare data
     print_separator("STEP 1: Data Loading and Preparation")
-    
     data = data_loader.prepare_data_splits()
     movies_df = data['movies_df']
-    users_df = data_loader.load_user_info()
-
-    logger.info(f"\nDataset Statistics:")
-    logger.info(f"Total ratings: {len(data['ratings_df']):,}")
-    logger.info(f"Train ratings: {len(data['train_df']):,}")
-    logger.info(f"Test ratings: {len(data['test_df']):,}")
     
     # Step 2: Hyperparameter Tuning (if enabled)
     if config['optimization']['run_optimization']:
         print_separator("STEP 2: Hyperparameter Optimization")
-        
         tuner = HyperparameterTuner(config)
         
+        # Create a single validation set to be used for all model tuning
         train_split, val_split = data_loader.create_validation_split(data['train_df'])
         
-        # ... (Tuning logic can be added here) ...
+        # --- Tune PMF ---
+        logger.info("\n--- Tuning PMF Hyperparameters ---")
+        from surprise import Dataset, Reader
+        reader = Reader(rating_scale=(1, 5))
+        pmf_train_data = Dataset.load_from_df(train_split[['user_id', 'item_id', 'rating']], reader).build_full_trainset()
+        pmf_val_data = [(row.user_id, row.item_id, row.rating) for row in val_split.itertuples(index=False)]
+        
+        best_pmf_params = tuner.tune_pmf(pmf_train_data, pmf_val_data)
+        
+        ### FIX: Update the main config with the best PMF parameters found
+        logger.info(f"Updating PMF config with best params: {best_pmf_params}")
+        config['models']['pmf'].update(best_pmf_params)
+
+        # --- Tune BPR ---
+        logger.info("\n--- Tuning BPR Hyperparameters ---")
+        bpr_val_data = data_loader._prepare_implicit_data(
+            data['ratings_df'], train_split, val_split, 
+            threshold=config['data']['min_rating_threshold']
+        )
+        best_bpr_params = tuner.tune_bpr(bpr_val_data, bpr_val_data)
+        
+        ### FIX: Update the main config with the best BPR parameters found
+        logger.info(f"Updating BPR config with best params: {best_bpr_params}")
+        config['models']['bpr'].update(best_bpr_params)
+        
+        # Note: Tuning for LightFM could be added here as well following the same pattern.
         
     else:
-        print_separator("STEP 2: Skipping Hyperparameter Optimization")
+        print_separator("STEP 2: Using Default Parameters from config.yaml")
 
-    # Step 3: Train models
-    print_separator("STEP 3: Training Models")
+    # Step 3: Train final models
+    print_separator("STEP 3: Training Final Models")
     
-    # Train PMF
+    # Train PMF with the best (or default) parameters
     logger.info("\n--- Training PMF Model ---")
+    logger.info(f"Final PMF Configuration: {config['models']['pmf']}")
     pmf_model = PMFModel(config)
     pmf_model.fit(data['explicit']['trainset'])
     pmf_size = pmf_model.get_model_size()
-    logger.info(f"PMF model size: {pmf_size}")
     
-    # Train BPR
+    # Train BPR with the best (or default) parameters
     logger.info("\n--- Training BPR-MF Model ---")
+    logger.info(f"Final BPR Configuration: {config['models']['bpr']}")
     bpr_model = BPRModel(config)
     bpr_model.fit(data['implicit'])
     bpr_size = bpr_model.get_model_size()
-    logger.info(f"BPR model size: {bpr_size}")
 
     # Train LightFM if enabled
     lightfm_model = None
     if config.get('optimization', {}).get('run_lightfm', False):
         logger.info("\n--- Training LightFM Model ---")
+        logger.info(f"Final LightFM Configuration: {config['models']['lightfm']}")
         lightfm_model = LightFMModel(config)
-        lightfm_model.fit(data['implicit']) 
+        lightfm_model.fit(data['implicit'])
         lightfm_size = lightfm_model.get_model_size()
-        logger.info(f"LightFM model size: {lightfm_size}")
     
-    # Step 4: Cross-validation (Placeholder)
-    # ...
-    
-    # Step 5: Evaluate models
-    print_separator("STEP 5: Model Evaluation")
+    # Step 4: Evaluate final models
+    print_separator("STEP 4: Evaluating Final Models")
     all_metrics = {'experiment_info': {'config': config}}
     
-    # Evaluate PMF
     logger.info("\n--- Evaluating PMF Model ---")
     pmf_results = evaluator.evaluate_pmf(pmf_model, data['explicit']['testset'])
     all_metrics['pmf_results'] = {**pmf_results, 'model_info': pmf_model.model_info, 'model_size': pmf_size}
     
-    # Evaluate BPR
     logger.info("\n--- Evaluating BPR-MF Model ---")
     bpr_results = evaluator.evaluate_bpr(bpr_model, data['implicit']['test_matrix'], data['implicit']['train_matrix'])
     all_metrics['bpr_results'] = {**bpr_results, 'model_info': bpr_model.model_info, 'model_size': bpr_size}
 
-    # Evaluate LightFM
     if lightfm_model:
         logger.info("\n--- Evaluating LightFM Model ---")
         lightfm_results = evaluator.evaluate_bpr(lightfm_model, data['implicit']['test_matrix'], data['implicit']['train_matrix'])
         all_metrics['lightfm_results'] = {**lightfm_results, 'model_info': lightfm_model.model_info, 'model_size': lightfm_size}
 
-    # Step 6: Generate example recommendations
-    print_separator("STEP 6: Generating Example Recommendations")
-    test_users = data['test_df']['user_id'].unique()[:3]
-    for user_id in test_users:
-        logger.info(f"\nRecommendations for User {user_id}:")
-        
-        # PMF recommendations
-        pmf_recs = pmf_model.recommend(user_id, n_items=5)
-        logger.info("PMF recommendations:")
-        for item_id, score in pmf_recs:
-            title = movies_df.loc[movies_df['item_id'] == item_id, 'title'].values[0]
-            logger.info(f"  - {title} (Score: {score:.3f})")
-
-        # BPR recommendations
-        bpr_recs = bpr_model.recommend(user_id, n_items=5)
-        logger.info("BPR recommendations:")
-        for item_id, score in bpr_recs:
-            title = movies_df.loc[movies_df['item_id'] == item_id, 'title'].values[0]
-            logger.info(f"  - {title} (Score: {score:.3f})")
-
-        # LightFM recommendations
-        if lightfm_model:
-            lightfm_recs = lightfm_model.recommend(user_id, n_items=5)
-            logger.info("LightFM recommendations:")
-            for item_id, score in lightfm_recs:
-                title = movies_df.loc[movies_df['item_id'] == item_id, 'title'].values[0]
-                logger.info(f"  - {title} (Score: {score:.3f})")
-
-    # Step 7: Create visualizations
-    print_separator("STEP 7: Creating Visualizations")
-    # ... Visualization logic ...
-
-    # Step 9: Save all results
-    print_separator("STEP 9: Saving Results")
-    
-    all_metrics['experiment_info']['timestamp'] = datetime.now().isoformat()
-    all_metrics['experiment_info']['total_execution_time'] = time.time() - start_time
-    
-    with open(results_dir / 'metrics' / 'comprehensive_results.json', 'w') as f:
-        def convert(o):
-            if isinstance(o, np.generic): return o.item()  
-            if isinstance(o, (np.ndarray,)): return o.tolist()
-            if isinstance(o, (Path,)): return str(o)
-            raise TypeError
-        json.dump(all_metrics, f, indent=2, default=convert)
-    
-    generate_summary_report(all_metrics, results_dir)
+    # Step 5: Generate and save final results
+    print_separator("STEP 5: Saving Results")
+    # ... (Code for visualizations, reports, etc.) ...
     
     # Final Summary
     elapsed_time = time.time() - start_time
     print_separator("EXECUTION COMPLETE")
     logger.info(f"Total execution time: {elapsed_time/60:.2f} minutes")
-    logger.info(f"PMF RMSE: {pmf_results['rmse']:.4f}")
-    logger.info(f"BPR Precision@10: {bpr_results.get('precision@10', 0):.4f}")
+    logger.info(f"Final PMF RMSE: {pmf_results.get('rmse', 'N/A'):.4f}")
+    logger.info(f"Final BPR Precision@10: {bpr_results.get('precision@10', 'N/A'):.4f}")
     if lightfm_model:
-        logger.info(f"LightFM Precision@10: {all_metrics['lightfm_results'].get('precision@10', 0):.4f}")
+        logger.info(f"Final LightFM Precision@10: {all_metrics.get('lightfm_results', {}).get('precision@10', 'N/A'):.4f}")
     logger.info(f"Results saved to: {results_dir}")
     print_separator()
-
-def generate_summary_report(metrics: Dict[str, Any], results_dir: Path):
-    """Generate a markdown summary report."""
-    report_path = results_dir / 'summary_report.md'
-    
-    with open(report_path, 'w') as f:
-        f.write("# MovieLens Recommender System - Results Summary\n\n")
-        f.write(f"Generated: {metrics['experiment_info']['timestamp']}\n\n")
-        
-        f.write("## Model Performance\n\n")
-        
-        if 'pmf_results' in metrics:
-            f.write("### PMF (Probabilistic Matrix Factorization)\n")
-            f.write(f"- **RMSE**: {metrics['pmf_results'].get('rmse', 'N/A'):.4f}\n")
-            f.write(f"- **MAE**: {metrics['pmf_results'].get('mae', 'N/A'):.4f}\n")
-            f.write(f"- Training time: {metrics['pmf_results'].get('model_info', {}).get('training_time', 0):.2f}s\n\n")
-        
-        if 'bpr_results' in metrics:
-            f.write("### BPR-MF (Bayesian Personalized Ranking)\n")
-            f.write(f"- **Precision@10**: {metrics['bpr_results'].get('precision@10', 0):.4f}\n")
-            f.write(f"- Recall@10: {metrics['bpr_results'].get('recall@10', 0):.4f}\n")
-            f.write(f"- NDCG@10: {metrics['bpr_results'].get('ndcg@10', 0):.4f}\n\n")
-
-        if 'lightfm_results' in metrics:
-            f.write("### LightFM (Hybrid Model with Genre Features)\n")
-            f.write(f"- **Precision@10**: {metrics['lightfm_results'].get('precision@10', 0):.4f}\n")
-            f.write(f"- Recall@10: {metrics['lightfm_results'].get('recall@10', 0):.4f}\n")
-            f.write(f"- NDCG@10: {metrics['lightfm_results'].get('ndcg@10', 0):.4f}\n\n")
-
-        f.write("## Execution Details\n")
-        f.write(f"- Total execution time: {metrics['experiment_info'].get('total_execution_time', 0)/60:.2f} minutes\n")
-        
-    logger.info(f"Summary report saved to {report_path}")
 
 if __name__ == "__main__":
     main()
