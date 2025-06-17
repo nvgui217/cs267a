@@ -1,28 +1,66 @@
+# config/config.yaml
 data:
   movielens_path: "data/raw/ml-100k"
   test_size: 0.2
+  min_rating_threshold: 3.0  
+  temporal_split: false      # Use temporal splitting if true
+  stratified_split: false    # Use stratified splitting if true
+  min_train_items: 5         # Minimum items per user in training
+  use_confidence_weights: false  # Use rating values as confidence in implicit
   random_state: 42
-  implicit_threshold: 3.0  # Ratings >= 3 are considered positive
 
 models:
   pmf:
-    n_factors: 50  # As required by baseline
-    n_epochs: 20
-    lr_all: 0.005
-    reg_all: 0.02
+    algorithm: "svd"         # Options: "svd", "nmf"
+    n_factors: 50           # Number of latent factors
+    n_epochs: 20            # Number of training epochs
+    learning_rate: 0.005    # Learning rate (lr_all for SVD)
+    regularization: 0.02    # L2 regularization (reg_all for SVD)
+    biased: false           # False for pure PMF
+    reg_pu: null           # User factor regularization (if different)
+    reg_qi: null           # Item factor regularization (if different)
     random_state: 42
+    verbose: true
     
   bpr:
-    factors: 50
-    iterations: 100
-    learning_rate: 0.01
-    regularization: 0.01
+    algorithm: "bpr"        # Options: "bpr", "als", "lmf"
+    factors: 100             # Number of latent factors
+    iterations: 400         # Number of training iterations
+    learning_rate: 0.05     # Learning rate (for BPR/LMF)
+    regularization: 5.0e-4    # L2 regularization
+    num_threads: 0          # 0 = use all available cores
+    dtype: "float32"        # Data type for memory optimization
     random_state: 42
+    verify_negative_samples: false  # For BPR
 
+optimization:
+  run_optimization: true   # Set to true to run hyperparameter tuning
+  n_trials: 20            # Number of Optuna trials
+  timeout: 900            # Timeout in seconds (1 hour)
+  n_jobs: 4                # Number of parallel jobs
+  
 evaluation:
-  k_values: [10]  # For Precision@K
+  k_values: [5, 10, 20]    # Values of K for Precision@K, Recall@K, etc.
+  max_eval_users: 1000     # Maximum users to evaluate (for efficiency)
+  calc_diversity: true     # Calculate diversity metrics
+  calc_confidence: false   # Calculate confidence intervals (PMF)
   
 output:
   save_models: true
   save_plots: true
+  save_predictions: false  # Save individual predictions
   results_dir: "results"
+  
+advanced:
+  ensemble:
+    enabled: false         # Enable ensemble methods
+    models: ["pmf", "bpr"]
+    method: "weighted"     # Options: "weighted", "stacking"
+  
+  cross_validation:
+    enabled: false
+    n_folds: 5
+    
+  time_based_evaluation:
+    enabled: false
+    n_windows: 5
