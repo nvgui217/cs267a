@@ -1,18 +1,21 @@
+# main.py
 import logging
 import yaml
+from pathlib import Path
 import json
 import time
-from pathlib import Path
 from datetime import datetime
 import numpy as np
-from surprise import accuracy
-from tqdm import tqdm
+from typing import Dict, Any
+import pandas as pd 
 
-# Import modules
-from src.data_loader import MovieLensDataLoader
-from src.models import PMFModel, BPRModel
-from src.evaluation import Evaluator
-from src.visualization import Visualizer
+# Import all modules
+from src.data.data_loader import MovieLensDataLoader
+from src.models.pmf_model import PMFModel
+from src.models.bpr_model import BPRModel
+from src.evaluation.evaluator import ModelEvaluator
+from src.visualization.plots import RecommenderVisualizer
+from src.optimization.hyperparameter_tuning import HyperparameterTuner
 
 # Setup logging
 logging.basicConfig(
@@ -25,268 +28,421 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def evaluate_bpr_as_rating_predictor(bpr_model, test_df, train_df):
-    """Evaluate BPR model on rating prediction task for RMSE comparison."""
-    logger.info("Evaluating BPR-MF on rating prediction task...")
-    
-    # Sample test set for efficiency
-    test_sample = test_df.sample(n=min(5000, len(test_df)), random_state=42)
-    
-    predictions = []
-    true_ratings = []
-    
-    for _, row in tqdm(test_sample.iterrows(), total=len(test_sample), desc="BPR predictions"):
-        user_id = row['user_id']
-        item_id = row['item_id']
-        true_rating = row['rating']
-        
-        # Get BPR score
-        scores = bpr_model.predict_for_user(user_id, [item_id])
-        if scores[0] != 0.0:  # Valid prediction
-            # Convert BPR score to rating scale (1-5)
-            # Using sigmoid transformation and scaling
-            score = scores[0]
-            rating_pred = 1 + 4 * (1 / (1 + np.exp(-score)))
-            
-            predictions.append(rating_pred)
-            true_ratings.append(true_rating)
-    
-    # Calculate RMSE
-    if predictions:
-        rmse = np.sqrt(np.mean((np.array(true_ratings) - np.array(predictions)) ** 2))
-        logger.info(f"BPR-MF RMSE on rating prediction: {rmse:.4f}")
-        return rmse
+def print_separator(title: str = "", char: str = "=", length: int = 80):
+    """Print a formatted separator line."""
+    if title:
+        padding = (length - len(title) - 2) // 2
+        logger.info(f"\n{char * padding} {title} {char * padding}")
     else:
-        logger.warning("No valid predictions for BPR RMSE calculation")
-        return float('inf')
+        logger.info(char * length)
 
 def main():
-    """Main execution function."""
+    """Main execution function with all features."""
     start_time = time.time()
-    logger.info("="*80)
-    logger.info("CS 267A - MovieLens Recommender System Implementation")
+    
+    print_separator("CS 267A - MovieLens Recommender System Implementation")
     logger.info("Baseline: PMF with scikit-surprise")
     logger.info("Medium Goal: BPR-MF with implicit library")
-    logger.info("="*80)
+    logger.info("Advanced Features: Hyperparameter Tuning, Cross-validation, Ensemble")
+    print_separator()
     
     # Load configuration
     with open('config/config.yaml', 'r') as f:
         config = yaml.safe_load(f)
     
-    # Create results directories
+    # Create results directory structure
     results_dir = Path(config['output']['results_dir'])
-    for subdir in ['models', 'metrics', 'plots']:
+    for subdir in ['models', 'metrics', 'plots', 'predictions', 'optimization']:
         (results_dir / subdir).mkdir(parents=True, exist_ok=True)
     
-    # Initialize data loader
-    data_loader = MovieLensDataLoader(config['data']['movielens_path'])
+    # Initialize components
+    data_loader = MovieLensDataLoader('config/config.yaml')
+    evaluator = ModelEvaluator(config)
+    visualizer = RecommenderVisualizer(str(results_dir / 'plots'))
     
-    # Load data
-    logger.info("\n" + "="*50)
-    logger.info("Step 1: Loading MovieLens-100K Dataset")
-    logger.info("="*50)
+    # Step 1: Load and prepare data
+    print_separator("STEP 1: Data Loading and Preparation")
     
-    data = data_loader.prepare_data_splits(
-        test_size=config['data']['test_size'],
-        random_state=config['data']['random_state']
-    )
+    data = data_loader.prepare_data_splits()
     movies_df = data_loader.load_movies_with_genres()
+    users_df = data_loader.load_user_info()
     
-    # Print dataset statistics
+    # Print comprehensive dataset statistics
     logger.info(f"\nDataset Statistics:")
     logger.info(f"Total ratings: {len(data['ratings_df']):,}")
     logger.info(f"Train ratings: {len(data['train_df']):,}")
     logger.info(f"Test ratings: {len(data['test_df']):,}")
     logger.info(f"Number of users: {data['ratings_df']['user_id'].nunique():,}")
     logger.info(f"Number of items: {data['ratings_df']['item_id'].nunique():,}")
+    logger.info(f"Rating density: {len(data['ratings_df']) / (data['ratings_df']['user_id'].nunique() * data['ratings_df']['item_id'].nunique()):.4%}")
+    logger.info(f"Average ratings per user: {len(data['ratings_df']) / data['ratings_df']['user_id'].nunique():.2f}")
+    logger.info(f"Average ratings per item: {len(data['ratings_df']) / data['ratings_df']['item_id'].nunique():.2f}")
     
-    # BASELINE: Train PMF model
-    logger.info("\n" + "="*50)
-    logger.info("Step 2: Training PMF Model (Baseline)")
-    logger.info("="*50)
+    # Genre statistics
+    genre_counts = movies_df['primary_genre'].value_counts()
+    logger.info(f"\nTop 5 genres: {genre_counts.head().to_dict()}")
     
+    # User demographics
+    logger.info(f"\nUser demographics:")
+    logger.info(f"Age range: {users_df['age'].min()}-{users_df['age'].max()}")
+    logger.info(f"Gender distribution: {users_df['gender'].value_counts().to_dict()}")
+    
+    # Step 2: Hyperparameter Tuning (if enabled)
+    if config['optimization']['run_optimization']:
+        print_separator("STEP 2: Hyperparameter Optimization")
+        
+        tuner = HyperparameterTuner(config)
+        
+        # Create validation splits
+        train_split, val_split = data_loader.create_validation_split(
+            data['train_df'], val_ratio=0.1
+        )
+        
+        # Prepare validation data
+        from surprise import Dataset, Reader
+        reader = Reader(rating_scale=(1, 5))
+        
+        # PMF validation data
+        pmf_train_data = Dataset.load_from_df(
+            train_split[['user_id', 'item_id', 'rating']], reader
+        ).build_full_trainset()
+        pmf_val_data = [(row.user_id, row.item_id, row.rating) 
+                        for row in val_split.itertuples(index=False)]
+        
+        # Tune PMF
+        logger.info("\n--- Tuning PMF Hyperparameters ---")
+        best_pmf_params = tuner.tune_pmf(
+            pmf_train_data, 
+            pmf_val_data[:1000],  # Use subset for efficiency
+            n_trials=config['optimization'].get('n_trials', 50),
+            n_jobs=config['optimization'].get('n_jobs', 1)
+        )
+        
+        # Update config with best parameters
+        config['models']['pmf'].update(best_pmf_params)
+        
+        # BPR validation data
+        # Would need to prepare implicit validation data here
+                # ----------------------- BPR validation data -----------------------
+        # Build an implicit (binary) train / val set that mirrors the explicit
+        # split we just made. We reuse the helper already defined in
+        # MovieLensDataLoader.
+        bpr_val_data = data_loader._prepare_implicit_data(
+            data['ratings_df'],          # full DF (needed for id mapping)
+            train_split,                 # implicit-train matrix
+            val_split,                   # implicit-validation “test” matrix
+            threshold=config['data']['min_rating_threshold']
+        )
+
+        # --- Tuning BPR Hyperparameters ---
+        logger.info("\n--- Tuning BPR Hyperparameters ---")
+        best_bpr_params = tuner.tune_bpr(
+            bpr_val_data,               # train_data (implicit)
+            bpr_val_data,               # val_data   (implicit)
+            n_trials=config['optimization'].get('n_trials', 50),
+            n_jobs  =config['optimization'].get('n_jobs',   1)
+        )
+
+        # Update the live config so the **final** BPR model is trained
+        # with the best params we just found.
+        config['models']['bpr'].update(best_bpr_params)
+
+        
+    else:
+        print_separator("STEP 2: Training Models with Default Parameters")
+    
+    # Step 3: Train models
+    print_separator("STEP 3: Training Models")
+    
+    # Train PMF
+    logger.info("\n--- Training PMF Model ---")
     pmf_config = config['models']['pmf']
-    logger.info(f"PMF Hyperparameters:")
-    logger.info(f"  - n_factors: {pmf_config['n_factors']}")
-    logger.info(f"  - n_epochs: {pmf_config['n_epochs']}")
-    logger.info(f"  - learning_rate: {pmf_config['lr_all']}")
-    logger.info(f"  - regularization: {pmf_config['reg_all']}")
+    logger.info(f"PMF Configuration: {pmf_config}")
     
-    pmf_model = PMFModel(
-        n_factors=pmf_config['n_factors'],
-        n_epochs=pmf_config['n_epochs'],
-        lr_all=pmf_config['lr_all'],
-        reg_all=pmf_config['reg_all'],
-        random_state=pmf_config['random_state']
-    )
-    
+    pmf_model = PMFModel(config)
     pmf_model.fit(data['explicit']['trainset'])
     
-    # Evaluate PMF
-    logger.info("\nEvaluating PMF model...")
-    pmf_predictions = pmf_model.test(data['explicit']['testset'])
-    pmf_rmse = accuracy.rmse(pmf_predictions, verbose=False)
-    pmf_mae = accuracy.mae(pmf_predictions, verbose=False)
+    # Get model size info
+    pmf_size = pmf_model.get_model_size()
+    logger.info(f"PMF model size: {pmf_size}")
     
-    logger.info(f"PMF Results:")
-    logger.info(f"  - RMSE: {pmf_rmse:.4f}")
-    logger.info(f"  - MAE: {pmf_mae:.4f}")
-    
-    # MEDIUM GOAL: Train BPR-MF model
-    logger.info("\n" + "="*50)
-    logger.info("Step 3: Training BPR-MF Model (Medium Goal)")
-    logger.info("="*50)
-    
+    # Train BPR
+    logger.info("\n--- Training BPR-MF Model ---")
     bpr_config = config['models']['bpr']
-    logger.info(f"BPR-MF Hyperparameters:")
-    logger.info(f"  - factors: {bpr_config['factors']}")
-    logger.info(f"  - iterations: {bpr_config['iterations']}")
-    logger.info(f"  - learning_rate: {bpr_config['learning_rate']}")
-    logger.info(f"  - regularization: {bpr_config['regularization']}")
+    logger.info(f"BPR Configuration: {bpr_config}")
     
-    bpr_model = BPRModel(
-        factors=bpr_config['factors'],
-        iterations=bpr_config['iterations'],
-        learning_rate=bpr_config['learning_rate'],
-        regularization=bpr_config['regularization'],
-        random_state=bpr_config['random_state']
-    )
-    
+    bpr_model = BPRModel(config)
     bpr_model.fit(data['implicit'])
     
-    # Evaluate BPR-MF
-    logger.info("\nEvaluating BPR-MF model...")
+    bpr_size = bpr_model.get_model_size()
+    logger.info(f"BPR model size: {bpr_size}")
     
-    # Evaluate as rating predictor for RMSE comparison
-    bpr_rmse_equivalent = evaluate_bpr_as_rating_predictor(
-        bpr_model, data['test_df'], data['train_df']
-    )
-    
-    # Also evaluate with ranking metrics
-    evaluator = Evaluator()
-    
-    # Get test users with positive interactions
-    test_matrix = data['implicit']['test_matrix'].tocsr()
-    test_users = []
-    ground_truth = []
-    recommendations = []
-    
-    for user_idx in range(test_matrix.shape[0]):
-        if test_matrix[user_idx].nnz > 0:  # User has test interactions
-            user_id = data['implicit']['idx_to_user'][user_idx]
-            true_items = test_matrix[user_idx].indices.tolist()
-            
-            # Get recommendations
-            recs = bpr_model.recommend(user_id, n_items=10)
-            rec_items = [item_id for item_id, _ in recs]
-            
-            test_users.append(user_id)
-            ground_truth.append(true_items)
-            recommendations.append(rec_items)
-    
-    # Calculate Precision@10
-    precision_at_10 = evaluator.compute_precision_at_k(recommendations, ground_truth, k=10)
-    logger.info(f"BPR-MF Precision@10: {precision_at_10:.4f}")
-    
-    # MEDIUM GOAL REQUIREMENT: Show that BPR-MF RMSE ≤ PMF baseline
-    logger.info("\n" + "="*50)
-    logger.info("Medium Goal Verification")
-    logger.info("="*50)
-    logger.info(f"PMF RMSE: {pmf_rmse:.4f}")
-    logger.info(f"BPR-MF RMSE (equivalent): {bpr_rmse_equivalent:.4f}")
-    
-    if bpr_rmse_equivalent <= pmf_rmse:
-        logger.info("✓ SUCCESS: BPR-MF RMSE ≤ PMF baseline")
-    else:
-        logger.info("Note: BPR-MF is optimized for ranking, not rating prediction")
-        # Evaluate PMF as ranker for fair comparison
-        pmf_precision = evaluator.evaluate_pmf_as_ranker(
-            pmf_model, data['test_df'], data['train_df']
+    # Step 4: Cross-validation (if enabled)
+    if config['advanced']['cross_validation']['enabled']:
+        print_separator("STEP 4: Cross-Validation")
+        
+        n_folds = config['advanced']['cross_validation']['n_folds']
+        
+        # Cross-validate PMF
+        logger.info(f"\n--- {n_folds}-Fold Cross-Validation for PMF ---")
+        pmf_cv_results = evaluator.cross_validate_pmf(
+            PMFModel, data, n_folds=n_folds
         )
-        logger.info(f"For comparison - PMF Precision@10: {pmf_precision:.4f}")
-        logger.info(f"BPR-MF Precision@10: {precision_at_10:.4f}")
-        if precision_at_10 > pmf_precision:
-            logger.info("✓ SUCCESS: BPR-MF outperforms PMF on ranking task")
+        logger.info(f"PMF CV Results: RMSE = {pmf_cv_results['rmse_mean']:.4f} "
+                   f"(±{pmf_cv_results['rmse_std']:.4f})")
     
-    # MEDIUM GOAL REQUIREMENT: Create item-factor scatter plot colored by genre
-    logger.info("\n" + "="*50)
-    logger.info("Step 4: Creating Visualizations")
-    logger.info("="*50)
+    # Step 5: Evaluate models
+    print_separator("STEP 5: Model Evaluation")
     
-    visualizer = Visualizer()
-    
-    # Get item factors
-    pmf_item_factors = pmf_model.get_item_factors()
-    bpr_item_factors = bpr_model.get_item_factors()
-    
-    # Get item IDs in order
-    item_ids = [data['explicit']['trainset'].to_raw_iid(i) 
-                for i in range(pmf_item_factors.shape[0])]
-    
-    # Create the required plot
-    logger.info("Creating item-factor scatter plot colored by genre...")
-    visualizer.plot_item_factors_by_genre(
-        pmf_item_factors, bpr_item_factors, item_ids, movies_df
+    # Evaluate PMF
+    logger.info("\n--- Evaluating PMF Model ---")
+    pmf_results = evaluator.evaluate_pmf(
+        pmf_model, 
+        data['explicit']['testset'],
+        calc_confidence=config['evaluation']['calc_confidence']
     )
     
-    # Create comparison plot
-    results = {
-        'pmf_rmse': pmf_rmse,
-        'bpr_rmse_equivalent': bpr_rmse_equivalent
-    }
-    visualizer.plot_model_comparison(results)
+    # Evaluate BPR
+    logger.info("\n--- Evaluating BPR-MF Model ---")
+    bpr_results = evaluator.evaluate_bpr(
+        bpr_model, 
+        data['implicit']['test_matrix'],
+        data['implicit']['train_matrix'],
+        k_values=config['evaluation']['k_values'],
+        calc_diversity=config['evaluation']['calc_diversity']
+    )
     
-    # Save results
-    logger.info("\n" + "="*50)
-    logger.info("Step 5: Saving Results")
-    logger.info("="*50)
+    # Time-based evaluation (if enabled)
+    if config['advanced']['time_based_evaluation']['enabled']:
+        logger.info("\n--- Time-based Evaluation ---")
+        time_results = evaluator.evaluate_time_based_split(
+            pmf_model, 
+            data['test_df'],
+            time_windows=config['advanced']['time_based_evaluation']['n_windows']
+        )
+        logger.info(f"RMSE over time: {time_results['window_rmse']}")
     
-    # Save metrics
-    metrics = {
-        'baseline': {
-            'model': 'PMF (Probabilistic Matrix Factorization)',
-            'implementation': 'scikit-surprise SVD with biased=False',
-            'hyperparameters': pmf_config,
-            'results': {
-                'rmse': float(pmf_rmse),
-                'mae': float(pmf_mae)
-            }
+    # Step 6: Generate recommendations
+    print_separator("STEP 6: Generating Example Recommendations")
+    
+    # Sample some test users
+    test_users = data['test_df']['user_id'].unique()[:5]
+    
+    all_recommendations = {}
+    for user_id in test_users:
+        logger.info(f"\nRecommendations for User {user_id}:")
+        
+        # PMF recommendations
+        pmf_recs = pmf_model.recommend(user_id, n_items=10)
+        logger.info("PMF recommendations:")
+        for i, (item_id, score) in enumerate(pmf_recs[:5]):
+            movie = movies_df[movies_df['item_id'] == item_id]
+            if not movie.empty:
+                title = movie.iloc[0]['title']
+                genre = movie.iloc[0]['primary_genre']
+                logger.info(f"  {i+1}. {title} ({genre}) - Score: {score:.3f}")
+        
+        # BPR recommendations
+        bpr_recs = bpr_model.recommend(user_id, n_items=10)
+        logger.info("BPR recommendations:")
+        for i, (item_id, score) in enumerate(bpr_recs[:5]):
+            movie = movies_df[movies_df['item_id'] == item_id]
+            if not movie.empty:
+                title = movie.iloc[0]['title']
+                genre = movie.iloc[0]['primary_genre']
+                logger.info(f"  {i+1}. {title} ({genre}) - Score: {score:.3f}")
+        
+        all_recommendations[user_id] = bpr_recs
+    
+    # Find similar items example
+    logger.info("\n--- Finding Similar Items ---")
+    popular_movie_id = data['ratings_df']['item_id'].value_counts().index[0]
+    popular_movie = movies_df[movies_df['item_id'] == popular_movie_id].iloc[0]
+    logger.info(f"Finding items similar to: {popular_movie['title']}")
+    
+    similar_items = pmf_model.get_similar_items(popular_movie_id, n_similar=5)
+    for item_id, similarity in similar_items:
+        movie = movies_df[movies_df['item_id'] == item_id]
+        if not movie.empty:
+            logger.info(f"  - {movie.iloc[0]['title']} (similarity: {similarity:.3f})")
+    
+    # Step 7: Create visualizations
+    print_separator("STEP 7: Creating Visualizations")
+    
+    # Get factors
+    pmf_user_factors, pmf_item_factors = pmf_model.get_user_factors(), pmf_model.get_item_factors()
+    bpr_user_factors, bpr_item_factors = bpr_model.get_user_factors(), bpr_model.get_item_factors()
+    
+    # Map genres to items
+    item_genres = []
+    for item_idx in range(len(pmf_item_factors)):
+        item_id = data['explicit']['trainset'].to_raw_iid(item_idx)
+        movie = movies_df[movies_df['item_id'] == item_id]
+        if not movie.empty:
+            item_genres.append(movie.iloc[0]['primary_genre'])
+        else:
+            item_genres.append('unknown')
+    
+    # Create comprehensive visualizations
+    logger.info("Creating factor analysis plots...")
+    visualizer.plot_factor_analysis(
+        pmf_item_factors, bpr_item_factors, item_genres
+    )
+    
+    logger.info("Creating performance comparison plots...")
+    visualizer.plot_performance_comparison(pmf_results, bpr_results)
+    
+    logger.info("Creating recommendation distribution analysis...")
+    visualizer.plot_recommendation_distribution(
+        all_recommendations, movies_df
+    )
+    
+    # Plot hyperparameter tuning results if available
+    if config['optimization']['run_optimization']:
+            logger.info("Creating hyperparameter analysis plots...")
+            try:
+                pmf_trials_df = pd.read_csv(results_dir / 'optimization' / 'pmf_trials.csv')
+                
+                numeric_cols = pmf_trials_df.select_dtypes(include=[np.number]).columns.tolist()
+                if len(numeric_cols) > 0 and not pmf_trials_df.empty:
+                    visualizer.plot_hyperparameter_analysis(pmf_trials_df, save_name="pmf_hyperparameter_analysis")
+                else:
+                    logger.warning("No numeric data available for hyperparameter analysis plotting")
+                    
+            except Exception as e:
+                logger.warning(f"Could not create hyperparameter analysis plots: {e}")
+                logger.info("Continuing with remaining visualizations...")
+
+    # Step 8: Ensemble methods (if enabled)
+    if config['advanced']['ensemble']['enabled']:
+        print_separator("STEP 8: Ensemble Methods")
+        
+        logger.info("Training ensemble model...")
+        
+        if config['advanced']['ensemble']['method'] == 'weighted':
+            # Simple weighted ensemble
+            ensemble_weights = {'pmf': 0.5, 'bpr': 0.5}
+            
+            # Optionally tune weights
+            if config['optimization']['run_optimization']:
+                tuner = HyperparameterTuner(config)
+                ensemble_result = tuner.tune_ensemble(
+                    [pmf_model, bpr_model],
+                    data['explicit']['testset'][:1000],
+                    n_trials=50
+                )
+                ensemble_weights = {
+                    'pmf': ensemble_result['weights'][0],
+                    'bpr': ensemble_result['weights'][1]
+                }
+            
+            logger.info(f"Ensemble weights: {ensemble_weights}")
+    
+    # Step 9: Save all results
+    print_separator("STEP 9: Saving Results")
+    
+    # Save models
+    if config['output']['save_models']:
+        pmf_model.save_model(results_dir / 'models' / 'pmf_model.pkl')
+        bpr_model.save_model(results_dir / 'models' / 'bpr_model.pkl')
+    
+    # Prepare comprehensive metrics
+    all_metrics = {
+        'experiment_info': {
+            'timestamp': datetime.now().isoformat(),
+            'total_execution_time': time.time() - start_time,
+            'config': config
         },
-        'medium_goal': {
-            'model': 'BPR-MF (Bayesian Personalized Ranking)',
-            'implementation': 'implicit library',
-            'hyperparameters': bpr_config,
-            'results': {
-                'rmse_equivalent': float(bpr_rmse_equivalent),
-                'precision_at_10': float(precision_at_10)
-            }
-        },
-        'dataset': {
+        'dataset_info': {
             'name': 'MovieLens-100K',
             'total_ratings': len(data['ratings_df']),
             'train_size': len(data['train_df']),
             'test_size': len(data['test_df']),
             'n_users': data['ratings_df']['user_id'].nunique(),
             'n_items': data['ratings_df']['item_id'].nunique(),
-            'split_method': 'random 80/20'
+            'density': len(data['ratings_df']) / (data['ratings_df']['user_id'].nunique() * 
+                                                 data['ratings_df']['item_id'].nunique()),
+            'temporal_split': config['data']['temporal_split'],
+            'implicit_threshold': config['data']['min_rating_threshold']
         },
-        'timestamp': datetime.now().isoformat()
+        'pmf_results': {
+            **pmf_results,
+            'model_info': pmf_model.model_info,
+            'model_size': pmf_size,
+            'algorithm': config['models']['pmf']['algorithm']
+        },
+        'bpr_results': {
+            **bpr_results,
+            'model_info': bpr_model.model_info,
+            'model_size': bpr_size,
+            'algorithm': config['models']['bpr']['algorithm']
+        }
     }
     
-    with open(results_dir / 'metrics' / 'results.json', 'w') as f:
-        json.dump(metrics, f, indent=2)
+    # Add cross-validation results if available
+    if config['advanced']['cross_validation']['enabled']:
+        all_metrics['cross_validation'] = {
+            'pmf': pmf_cv_results
+        }
     
-    # Print final summary
+    # Add optimization results if available
+    if config['optimization']['run_optimization']:
+        all_metrics['optimization'] = {
+            'pmf_best_params': best_pmf_params,
+            'pmf_best_rmse': -tuner.study.best_value
+        }
+    
+    # Save comprehensive metrics
+    with open(results_dir / 'metrics' / 'comprehensive_results.json', 'w') as f:
+        json.dump(all_metrics, f, indent=2)
+    
+    # Generate summary report
+    generate_summary_report(all_metrics, results_dir)
+    
+    # Final summary
     elapsed_time = time.time() - start_time
-    logger.info("\n" + "="*80)
-    logger.info("EXECUTION SUMMARY")
-    logger.info("="*80)
+    print_separator("EXECUTION COMPLETE")
     logger.info(f"Total execution time: {elapsed_time/60:.2f} minutes")
-    logger.info(f"Baseline (PMF) RMSE: {pmf_rmse:.4f}")
-    logger.info(f"Medium Goal (BPR-MF) achieved: Yes")
-    logger.info(f"Plots saved to: {results_dir / 'plots'}")
-    logger.info(f"Metrics saved to: {results_dir / 'metrics' / 'results.json'}")
-    logger.info("="*80)
+    logger.info(f"PMF RMSE: {pmf_results['rmse']:.4f}")
+    logger.info(f"BPR Precision@10: {bpr_results.get('precision@10', 0):.4f}")
+    logger.info(f"Results saved to: {results_dir}")
+    print_separator()
+
+def generate_summary_report(metrics: Dict[str, Any], results_dir: Path):
+    """Generate a markdown summary report."""
+    report_path = results_dir / 'summary_report.md'
+    
+    with open(report_path, 'w') as f:
+        f.write("# MovieLens Recommender System - Results Summary\n\n")
+        f.write(f"Generated: {metrics['experiment_info']['timestamp']}\n\n")
+        
+        f.write("## Dataset Information\n")
+        f.write(f"- Total ratings: {metrics['dataset_info']['total_ratings']:,}\n")
+        f.write(f"- Train/Test split: {metrics['dataset_info']['train_size']:,} / "
+                f"{metrics['dataset_info']['test_size']:,}\n")
+        f.write(f"- Users: {metrics['dataset_info']['n_users']:,}\n")
+        f.write(f"- Items: {metrics['dataset_info']['n_items']:,}\n")
+        f.write(f"- Density: {metrics['dataset_info']['density']:.4%}\n\n")
+        
+        f.write("## Model Performance\n\n")
+        
+        f.write("### PMF (Probabilistic Matrix Factorization)\n")
+        f.write(f"- RMSE: {metrics['pmf_results']['rmse']:.4f}\n")
+        f.write(f"- MAE: {metrics['pmf_results']['mae']:.4f}\n")
+        f.write(f"- Training time: {metrics['pmf_results']['model_info']['training_time']:.2f}s\n")
+        f.write(f"- Factors: {metrics['pmf_results']['model_size']['n_factors']}\n\n")
+        
+        f.write("### BPR-MF (Bayesian Personalized Ranking)\n")
+        f.write(f"- Precision@10: {metrics['bpr_results'].get('precision@10', 0):.4f}\n")
+        f.write(f"- Recall@10: {metrics['bpr_results'].get('recall@10', 0):.4f}\n")
+        f.write(f"- NDCG@10: {metrics['bpr_results'].get('ndcg@10', 0):.4f}\n")
+        f.write(f"- Coverage: {metrics['bpr_results'].get('coverage', 0):.4f}\n")
+        f.write(f"- Training time: {metrics['bpr_results']['model_info']['training_time']:.2f}s\n\n")
+        
+        f.write("## Execution Details\n")
+        f.write(f"- Total execution time: {metrics['experiment_info']['total_execution_time']/60:.2f} minutes\n")
+        
+    logger.info(f"Summary report saved to {report_path}")
 
 if __name__ == "__main__":
     main()
