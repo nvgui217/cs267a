@@ -6,3 +6,4 @@ results
 src/__pycache__/
 src/evaluation/__pycache__/
 cache
+*.pyc
