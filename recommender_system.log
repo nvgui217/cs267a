@@ -1,384 +1,250 @@
-2025-06-16 21:26:28,226 - __main__ - INFO - 
-============ CS 267A - MovieLens Recommender System Implementation ============
-2025-06-16 21:26:28,226 - __main__ - INFO - Baseline: PMF with scikit-surprise
-2025-06-16 21:26:28,226 - __main__ - INFO - Medium Goal: BPR-MF with implicit library
-2025-06-16 21:26:28,226 - __main__ - INFO - Advanced Features: Hyperparameter Tuning, Cross-validation, Ensemble, LightFM
-2025-06-16 21:26:28,226 - __main__ - INFO - ================================================================================
-2025-06-16 21:26:28,229 - __main__ - INFO - 
-===================== STEP 1: Data Loading and Preparation =====================
-2025-06-16 21:26:28,229 - src.data.data_loader - INFO - Loading MovieLens-100K ratings from data/raw/ml-100k...
-2025-06-16 21:26:28,248 - src.data.data_loader - INFO - Loaded 100,000 ratings from 943 users and 1,682 items
-2025-06-16 21:26:28,248 - src.data.data_loader - INFO - Loading movie metadata with genres...
-2025-06-16 21:26:28,257 - src.data.data_loader - INFO - Loaded metadata for 1,682 movies
-2025-06-16 21:26:28,261 - src.data.data_loader - INFO - Train size: 80,000, Test size: 20,000
-2025-06-16 21:26:28,317 - src.data.data_loader - INFO - Converting to implicit feedback (threshold >= 3.0)...
-2025-06-16 21:26:28,336 - src.data.data_loader - INFO - Implicit matrices created - Shape: (943, 1682), Train interactions: 65,988, Test interactions: 16,532
-2025-06-16 21:26:28,336 - src.data.data_loader - INFO - Creating item feature matrix from genres...
-2025-06-16 21:26:28,338 - src.data.data_loader - INFO - Item feature matrix created with shape (1682, 19)
-2025-06-16 21:26:28,338 - __main__ - INFO - 
-===================== STEP 2: Hyperparameter Optimization =====================
-2025-06-16 21:26:28,341 - src.data.data_loader - INFO - Created validation split - Train: 72000, Val: 8000
-2025-06-16 21:26:28,341 - __main__ - INFO - 
---- Tuning PMF Hyperparameters ---
-2025-06-16 21:26:28,387 - src.optimization.hyperparameter_tuning - INFO - Starting PMF hyperparameter tuning with Optuna...
-2025-06-16 21:26:28,694 - src.optimization.hyperparameter_tuning - INFO - Trial 120: {'n_factors': 50, 'n_epochs': 20, 'learning_rate': 0.005, 'regularization': 0.02, 'biased': False}
-2025-06-16 21:26:28,694 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:28,694 - src.models.pmf_model - INFO - Configuration: {'n_factors': 50, 'n_epochs': 20, 'learning_rate': 0.005, 'regularization': 0.02, 'biased': False, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:28,912 - src.models.pmf_model - INFO - PMF training completed in 0.22 seconds
-2025-06-16 21:26:28,913 - src.models.pmf_model - INFO - Model size: Users (943, 50), Items (1636, 50)
-2025-06-16 21:26:28,913 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:28,936 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9439, MAE: 0.7430
-2025-06-16 21:26:29,029 - src.optimization.hyperparameter_tuning - INFO - Trial 121: {'n_factors': 190, 'n_epochs': 38, 'learning_rate': 0.014170122329172448, 'regularization': 0.08214315235263277, 'biased': True, 'reg_bu': 0.010584760420650088, 'reg_bi': 0.00010236732969571501}
-2025-06-16 21:26:29,029 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:29,029 - src.models.pmf_model - INFO - Configuration: {'n_factors': 190, 'n_epochs': 38, 'learning_rate': 0.014170122329172448, 'regularization': 0.08214315235263277, 'biased': True, 'reg_bu': 0.010584760420650088, 'reg_bi': 0.00010236732969571501, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:30,086 - src.models.pmf_model - INFO - PMF training completed in 1.06 seconds
-2025-06-16 21:26:30,086 - src.models.pmf_model - INFO - Model size: Users (943, 190), Items (1636, 190)
-2025-06-16 21:26:30,086 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:30,117 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9081, MAE: 0.7181
-2025-06-16 21:26:30,209 - src.optimization.hyperparameter_tuning - INFO - Trial 122: {'n_factors': 190, 'n_epochs': 34, 'learning_rate': 0.009815309805480442, 'regularization': 0.07078868790930697, 'biased': True, 'reg_bu': 0.0026969792498297324, 'reg_bi': 0.0001564225672747381}
-2025-06-16 21:26:30,209 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:30,209 - src.models.pmf_model - INFO - Configuration: {'n_factors': 190, 'n_epochs': 34, 'learning_rate': 0.009815309805480442, 'regularization': 0.07078868790930697, 'biased': True, 'reg_bu': 0.0026969792498297324, 'reg_bi': 0.0001564225672747381, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:31,184 - src.models.pmf_model - INFO - PMF training completed in 0.97 seconds
-2025-06-16 21:26:31,184 - src.models.pmf_model - INFO - Model size: Users (943, 190), Items (1636, 190)
-2025-06-16 21:26:31,184 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:31,207 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9099, MAE: 0.7192
-2025-06-16 21:26:31,302 - src.optimization.hyperparameter_tuning - INFO - Trial 123: {'n_factors': 200, 'n_epochs': 36, 'learning_rate': 0.020895373201796047, 'regularization': 0.08557582931392584, 'biased': True, 'reg_bu': 0.008411389139825854, 'reg_bi': 0.0002516221947818212}
-2025-06-16 21:26:31,302 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:31,302 - src.models.pmf_model - INFO - Configuration: {'n_factors': 200, 'n_epochs': 36, 'learning_rate': 0.020895373201796047, 'regularization': 0.08557582931392584, 'biased': True, 'reg_bu': 0.008411389139825854, 'reg_bi': 0.0002516221947818212, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:31,488 - src.models.pmf_model - INFO - PMF training completed in 0.19 seconds
-2025-06-16 21:26:31,488 - src.models.pmf_model - INFO - Model size: Users (943, 200), Items (1636, 200)
-2025-06-16 21:26:31,488 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:31,554 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9092, MAE: 0.7196
-2025-06-16 21:26:31,662 - src.optimization.hyperparameter_tuning - INFO - Trial 124: {'n_factors': 160, 'n_epochs': 30, 'learning_rate': 0.013515702510952623, 'regularization': 0.05988500052521178, 'biased': True, 'reg_bu': 0.013376590953085426, 'reg_bi': 0.00018463863911294813}
-2025-06-16 21:26:31,663 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:31,663 - src.models.pmf_model - INFO - Configuration: {'n_factors': 160, 'n_epochs': 30, 'learning_rate': 0.013515702510952623, 'regularization': 0.05988500052521178, 'biased': True, 'reg_bu': 0.013376590953085426, 'reg_bi': 0.00018463863911294813, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:32,365 - src.models.pmf_model - INFO - PMF training completed in 0.70 seconds
-2025-06-16 21:26:32,365 - src.models.pmf_model - INFO - Model size: Users (943, 160), Items (1636, 160)
-2025-06-16 21:26:32,366 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:32,402 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9164, MAE: 0.7220
-2025-06-16 21:26:32,492 - src.optimization.hyperparameter_tuning - INFO - Trial 125: {'n_factors': 180, 'n_epochs': 28, 'learning_rate': 0.024435218329699956, 'regularization': 0.04271992606092687, 'biased': True, 'reg_bu': 0.00623732524080508, 'reg_bi': 0.00014646375976157844}
-2025-06-16 21:26:32,493 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:32,493 - src.models.pmf_model - INFO - Configuration: {'n_factors': 180, 'n_epochs': 28, 'learning_rate': 0.024435218329699956, 'regularization': 0.04271992606092687, 'biased': True, 'reg_bu': 0.00623732524080508, 'reg_bi': 0.00014646375976157844, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:33,237 - src.models.pmf_model - INFO - PMF training completed in 0.74 seconds
-2025-06-16 21:26:33,237 - src.models.pmf_model - INFO - Model size: Users (943, 180), Items (1636, 180)
-2025-06-16 21:26:33,237 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:33,259 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9260, MAE: 0.7305
-2025-06-16 21:26:33,350 - src.optimization.hyperparameter_tuning - INFO - Trial 126: {'n_factors': 20, 'n_epochs': 34, 'learning_rate': 0.012536353105636422, 'regularization': 0.08688276944849817, 'biased': True, 'reg_bu': 0.004772177358287721, 'reg_bi': 0.007970210034526927}
-2025-06-16 21:26:33,350 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:33,350 - src.models.pmf_model - INFO - Configuration: {'n_factors': 20, 'n_epochs': 34, 'learning_rate': 0.012536353105636422, 'regularization': 0.08688276944849817, 'biased': True, 'reg_bu': 0.004772177358287721, 'reg_bi': 0.007970210034526927, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:33,685 - src.models.pmf_model - INFO - PMF training completed in 0.33 seconds
-2025-06-16 21:26:33,685 - src.models.pmf_model - INFO - Model size: Users (943, 20), Items (1636, 20)
-2025-06-16 21:26:33,685 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:33,706 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9091, MAE: 0.7174
-2025-06-16 21:26:33,789 - src.optimization.hyperparameter_tuning - INFO - Trial 127: {'n_factors': 180, 'n_epochs': 30, 'learning_rate': 0.01665641903099707, 'regularization': 0.07137157175727171, 'biased': True, 'reg_bu': 0.0015807645662003348, 'reg_bi': 0.0002160609852268053}
-2025-06-16 21:26:33,789 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:33,789 - src.models.pmf_model - INFO - Configuration: {'n_factors': 180, 'n_epochs': 30, 'learning_rate': 0.01665641903099707, 'regularization': 0.07137157175727171, 'biased': True, 'reg_bu': 0.0015807645662003348, 'reg_bi': 0.0002160609852268053, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:34,539 - src.models.pmf_model - INFO - PMF training completed in 0.75 seconds
-2025-06-16 21:26:34,540 - src.models.pmf_model - INFO - Model size: Users (943, 180), Items (1636, 180)
-2025-06-16 21:26:34,540 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:34,568 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9125, MAE: 0.7216
-2025-06-16 21:26:34,665 - src.optimization.hyperparameter_tuning - INFO - Trial 128: {'n_factors': 190, 'n_epochs': 31, 'learning_rate': 0.007436052231157411, 'regularization': 0.05004806057785722, 'biased': True, 'reg_bu': 0.007204313419929605, 'reg_bi': 0.0029788985607026772}
-2025-06-16 21:26:34,666 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:34,666 - src.models.pmf_model - INFO - Configuration: {'n_factors': 190, 'n_epochs': 31, 'learning_rate': 0.007436052231157411, 'regularization': 0.05004806057785722, 'biased': True, 'reg_bu': 0.007204313419929605, 'reg_bi': 0.0029788985607026772, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:35,494 - src.models.pmf_model - INFO - PMF training completed in 0.83 seconds
-2025-06-16 21:26:35,494 - src.models.pmf_model - INFO - Model size: Users (943, 190), Items (1636, 190)
-2025-06-16 21:26:35,494 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:35,515 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9185, MAE: 0.7251
-2025-06-16 21:26:35,603 - src.optimization.hyperparameter_tuning - INFO - Trial 129: {'n_factors': 190, 'n_epochs': 40, 'learning_rate': 0.0005823327398347286, 'regularization': 0.062358726171664394, 'biased': True, 'reg_bu': 0.00973872179976707, 'reg_bi': 0.00010200276392373983}
-2025-06-16 21:26:35,603 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:35,603 - src.models.pmf_model - INFO - Configuration: {'n_factors': 190, 'n_epochs': 40, 'learning_rate': 0.0005823327398347286, 'regularization': 0.062358726171664394, 'biased': True, 'reg_bu': 0.00973872179976707, 'reg_bi': 0.00010200276392373983, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:36,618 - src.models.pmf_model - INFO - PMF training completed in 1.02 seconds
-2025-06-16 21:26:36,619 - src.models.pmf_model - INFO - Model size: Users (943, 190), Items (1636, 190)
-2025-06-16 21:26:36,619 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:36,639 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9596, MAE: 0.7650
-2025-06-16 21:26:36,724 - src.optimization.hyperparameter_tuning - INFO - Trial 130: {'n_factors': 200, 'n_epochs': 33, 'learning_rate': 0.01905180731644941, 'regularization': 0.08601960671426669, 'biased': True, 'reg_bu': 0.004214317078825203, 'reg_bi': 0.0004510166949925}
-2025-06-16 21:26:36,724 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:36,724 - src.models.pmf_model - INFO - Configuration: {'n_factors': 200, 'n_epochs': 33, 'learning_rate': 0.01905180731644941, 'regularization': 0.08601960671426669, 'biased': True, 'reg_bu': 0.004214317078825203, 'reg_bi': 0.0004510166949925, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:37,680 - src.models.pmf_model - INFO - PMF training completed in 0.96 seconds
-2025-06-16 21:26:37,680 - src.models.pmf_model - INFO - Model size: Users (943, 200), Items (1636, 200)
-2025-06-16 21:26:37,680 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:37,701 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9082, MAE: 0.7191
-2025-06-16 21:26:37,788 - src.optimization.hyperparameter_tuning - INFO - Trial 131: {'n_factors': 180, 'n_epochs': 29, 'learning_rate': 0.033961898342662854, 'regularization': 0.09770301727191857, 'biased': True, 'reg_bu': 0.005901833095677711, 'reg_bi': 0.0005470088026383891}
-2025-06-16 21:26:37,788 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:37,788 - src.models.pmf_model - INFO - Configuration: {'n_factors': 180, 'n_epochs': 29, 'learning_rate': 0.033961898342662854, 'regularization': 0.09770301727191857, 'biased': True, 'reg_bu': 0.005901833095677711, 'reg_bi': 0.0005470088026383891, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:38,528 - src.models.pmf_model - INFO - PMF training completed in 0.74 seconds
-2025-06-16 21:26:38,528 - src.models.pmf_model - INFO - Model size: Users (943, 180), Items (1636, 180)
-2025-06-16 21:26:38,529 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:38,550 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9139, MAE: 0.7239
-2025-06-16 21:26:38,639 - src.optimization.hyperparameter_tuning - INFO - Trial 132: {'n_factors': 180, 'n_epochs': 25, 'learning_rate': 0.024385897164524748, 'regularization': 0.07708264773009738, 'biased': True, 'reg_bu': 0.022018314002661445, 'reg_bi': 0.0015738592593039166}
-2025-06-16 21:26:38,640 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:38,640 - src.models.pmf_model - INFO - Configuration: {'n_factors': 180, 'n_epochs': 25, 'learning_rate': 0.024385897164524748, 'regularization': 0.07708264773009738, 'biased': True, 'reg_bu': 0.022018314002661445, 'reg_bi': 0.0015738592593039166, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:39,257 - src.models.pmf_model - INFO - PMF training completed in 0.62 seconds
-2025-06-16 21:26:39,257 - src.models.pmf_model - INFO - Model size: Users (943, 180), Items (1636, 180)
-2025-06-16 21:26:39,257 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:39,281 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9129, MAE: 0.7222
-2025-06-16 21:26:39,376 - src.optimization.hyperparameter_tuning - INFO - Trial 133: {'n_factors': 160, 'n_epochs': 35, 'learning_rate': 0.00951785013906884, 'regularization': 0.08814171741205187, 'biased': True, 'reg_bu': 0.004857281656211753, 'reg_bi': 0.00017898728630413104}
-2025-06-16 21:26:39,376 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:39,376 - src.models.pmf_model - INFO - Configuration: {'n_factors': 160, 'n_epochs': 35, 'learning_rate': 0.00951785013906884, 'regularization': 0.08814171741205187, 'biased': True, 'reg_bu': 0.004857281656211753, 'reg_bi': 0.00017898728630413104, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:40,285 - src.models.pmf_model - INFO - PMF training completed in 0.91 seconds
-2025-06-16 21:26:40,285 - src.models.pmf_model - INFO - Model size: Users (943, 160), Items (1636, 160)
-2025-06-16 21:26:40,285 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:40,306 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9082, MAE: 0.7190
-2025-06-16 21:26:40,402 - src.optimization.hyperparameter_tuning - INFO - Trial 134: {'n_factors': 170, 'n_epochs': 26, 'learning_rate': 0.015330771835908964, 'regularization': 0.09983212948751446, 'biased': True, 'reg_bu': 0.007588752055790911, 'reg_bi': 0.00026077904298676957}
-2025-06-16 21:26:40,402 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:40,402 - src.models.pmf_model - INFO - Configuration: {'n_factors': 170, 'n_epochs': 26, 'learning_rate': 0.015330771835908964, 'regularization': 0.09983212948751446, 'biased': True, 'reg_bu': 0.007588752055790911, 'reg_bi': 0.00026077904298676957, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:41,062 - src.models.pmf_model - INFO - PMF training completed in 0.66 seconds
-2025-06-16 21:26:41,062 - src.models.pmf_model - INFO - Model size: Users (943, 170), Items (1636, 170)
-2025-06-16 21:26:41,062 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:41,089 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9075, MAE: 0.7198
-2025-06-16 21:26:41,193 - src.optimization.hyperparameter_tuning - INFO - Trial 135: {'n_factors': 190, 'n_epochs': 28, 'learning_rate': 0.02046283128938365, 'regularization': 0.0668894244164234, 'biased': True, 'reg_bu': 0.0037796922101357576, 'reg_bi': 0.003945594080645094}
-2025-06-16 21:26:41,194 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:41,194 - src.models.pmf_model - INFO - Configuration: {'n_factors': 190, 'n_epochs': 28, 'learning_rate': 0.02046283128938365, 'regularization': 0.0668894244164234, 'biased': True, 'reg_bu': 0.0037796922101357576, 'reg_bi': 0.003945594080645094, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:41,938 - src.models.pmf_model - INFO - PMF training completed in 0.74 seconds
-2025-06-16 21:26:41,938 - src.models.pmf_model - INFO - Model size: Users (943, 190), Items (1636, 190)
-2025-06-16 21:26:41,938 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:41,961 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9127, MAE: 0.7210
-2025-06-16 21:26:42,033 - src.optimization.hyperparameter_tuning - INFO - Trial 136: {'n_factors': 180, 'n_epochs': 34, 'learning_rate': 0.010855912403921909, 'regularization': 0.07320923171733365, 'biased': False}
-2025-06-16 21:26:42,033 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:42,033 - src.models.pmf_model - INFO - Configuration: {'n_factors': 180, 'n_epochs': 34, 'learning_rate': 0.010855912403921909, 'regularization': 0.07320923171733365, 'biased': False, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:43,052 - src.models.pmf_model - INFO - PMF training completed in 1.02 seconds
-2025-06-16 21:26:43,052 - src.models.pmf_model - INFO - Model size: Users (943, 180), Items (1636, 180)
-2025-06-16 21:26:43,052 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:43,094 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9262, MAE: 0.7343
-2025-06-16 21:26:43,191 - src.optimization.hyperparameter_tuning - INFO - Trial 137: {'n_factors': 140, 'n_epochs': 37, 'learning_rate': 0.038775740581970454, 'regularization': 0.0554930946104673, 'biased': True, 'reg_bu': 0.015872325245987272, 'reg_bi': 0.0008200059242577129}
-2025-06-16 21:26:43,191 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:43,191 - src.models.pmf_model - INFO - Configuration: {'n_factors': 140, 'n_epochs': 37, 'learning_rate': 0.038775740581970454, 'regularization': 0.0554930946104673, 'biased': True, 'reg_bu': 0.015872325245987272, 'reg_bi': 0.0008200059242577129, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:44,100 - src.models.pmf_model - INFO - PMF training completed in 0.91 seconds
-2025-06-16 21:26:44,100 - src.models.pmf_model - INFO - Model size: Users (943, 140), Items (1636, 140)
-2025-06-16 21:26:44,100 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:44,123 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9228, MAE: 0.7281
-2025-06-16 21:26:44,242 - src.optimization.hyperparameter_tuning - INFO - Trial 138: {'n_factors': 170, 'n_epochs': 33, 'learning_rate': 0.018009613911307367, 'regularization': 0.09995277865002009, 'biased': True, 'reg_bu': 0.011753237049053891, 'reg_bi': 0.001101592924797693}
-2025-06-16 21:26:44,242 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:44,242 - src.models.pmf_model - INFO - Configuration: {'n_factors': 170, 'n_epochs': 33, 'learning_rate': 0.018009613911307367, 'regularization': 0.09995277865002009, 'biased': True, 'reg_bu': 0.011753237049053891, 'reg_bi': 0.001101592924797693, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:45,109 - src.models.pmf_model - INFO - PMF training completed in 0.87 seconds
-2025-06-16 21:26:45,109 - src.models.pmf_model - INFO - Model size: Users (943, 170), Items (1636, 170)
-2025-06-16 21:26:45,110 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:45,134 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9074, MAE: 0.7190
-2025-06-16 21:26:45,231 - src.optimization.hyperparameter_tuning - INFO - Trial 139: {'n_factors': 190, 'n_epochs': 31, 'learning_rate': 0.014733255284076785, 'regularization': 0.08502579813134689, 'biased': True, 'reg_bu': 0.008813446361173333, 'reg_bi': 0.00014156323717921132}
-2025-06-16 21:26:45,231 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:26:45,231 - src.models.pmf_model - INFO - Configuration: {'n_factors': 190, 'n_epochs': 31, 'learning_rate': 0.014733255284076785, 'regularization': 0.08502579813134689, 'biased': True, 'reg_bu': 0.008813446361173333, 'reg_bi': 0.00014156323717921132, 'random_state': 42, 'verbose': False}
-2025-06-16 21:26:46,061 - src.models.pmf_model - INFO - PMF training completed in 0.83 seconds
-2025-06-16 21:26:46,061 - src.models.pmf_model - INFO - Model size: Users (943, 190), Items (1636, 190)
-2025-06-16 21:26:46,061 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:26:46,084 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9076, MAE: 0.7180
-2025-06-16 21:26:46,115 - src.optimization.hyperparameter_tuning - INFO - Best PMF parameters: {'n_factors': 160, 'n_epochs': 32, 'learning_rate': 0.01562834216905404, 'regularization': 0.09996927859063141, 'use_biased': True, 'reg_bu': 0.017432855230655284, 'reg_bi': 0.029349060168276663}
-2025-06-16 21:26:46,118 - src.optimization.hyperparameter_tuning - INFO - Best RMSE: 0.8733
-2025-06-16 21:26:50,552 - src.optimization.hyperparameter_tuning - INFO - Optimization results saved to results/optimization
-2025-06-16 21:26:50,553 - __main__ - INFO - Updating PMF config with best params: {'n_factors': 160, 'n_epochs': 32, 'learning_rate': 0.01562834216905404, 'regularization': 0.09996927859063141, 'use_biased': True, 'reg_bu': 0.017432855230655284, 'reg_bi': 0.029349060168276663}
-2025-06-16 21:26:50,553 - __main__ - INFO - 
---- Tuning BPR Hyperparameters ---
-2025-06-16 21:26:50,553 - src.data.data_loader - INFO - Converting to implicit feedback (threshold >= 3.0)...
-2025-06-16 21:26:50,564 - src.data.data_loader - INFO - Implicit matrices created - Shape: (943, 1682), Train interactions: 59,362, Test interactions: 6,626
-2025-06-16 21:26:50,564 - src.optimization.hyperparameter_tuning - INFO - Starting BPR-MF hyperparameter tuning with Optuna...
-2025-06-16 21:26:50,704 - src.optimization.hyperparameter_tuning - INFO - Trial 57: {'factors': 190, 'iterations': 100, 'learning_rate': 0.0003320343738951617, 'regularization': 7.42431967583527e-05, 'algorithm': 'bpr', 'verify_negative_samples': False, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:50,704 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:26:50,704 - src.models.bpr_model - INFO - Configuration: {'factors': 190, 'iterations': 100, 'learning_rate': 0.0003320343738951617, 'regularization': 7.42431967583527e-05, 'algorithm': 'bpr', 'verify_negative_samples': False, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:51,197 - src.models.bpr_model - INFO - Training completed in 0.49 seconds
-2025-06-16 21:26:51,197 - src.models.bpr_model - INFO - Model size: Users (943, 191), Items (1682, 191)
-2025-06-16 21:26:51,197 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:26:51,197 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:26:51,401 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0111, R@10: 0.0147, NDCG@10: 0.0133, Coverage: 0.0143
-2025-06-16 21:26:51,485 - src.optimization.hyperparameter_tuning - INFO - Trial 58: {'factors': 190, 'iterations': 125, 'learning_rate': 0.0043921253191761545, 'regularization': 0.00013766157379784655, 'algorithm': 'lmf', 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:51,485 - src.models.bpr_model - INFO - Training LMF model...
-2025-06-16 21:26:51,485 - src.models.bpr_model - INFO - Configuration: {'factors': 190, 'iterations': 125, 'learning_rate': 0.0043921253191761545, 'regularization': 0.00013766157379784655, 'algorithm': 'lmf', 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:52,874 - src.models.bpr_model - INFO - Training completed in 1.39 seconds
-2025-06-16 21:26:52,875 - src.models.bpr_model - INFO - Model size: Users (943, 192), Items (1682, 192)
-2025-06-16 21:26:52,875 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:26:52,875 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:26:53,139 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0038, R@10: 0.0075, NDCG@10: 0.0058, Coverage: 0.4620
-2025-06-16 21:26:53,270 - src.optimization.hyperparameter_tuning - INFO - Trial 59: {'factors': 140, 'iterations': 125, 'learning_rate': 0.0005965494266055131, 'regularization': 0.00017690686686194806, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:53,270 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:26:53,270 - src.models.bpr_model - INFO - Configuration: {'factors': 140, 'iterations': 125, 'learning_rate': 0.0005965494266055131, 'regularization': 0.00017690686686194806, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:53,842 - src.models.bpr_model - INFO - Training completed in 0.57 seconds
-2025-06-16 21:26:53,842 - src.models.bpr_model - INFO - Model size: Users (943, 141), Items (1682, 141)
-2025-06-16 21:26:53,842 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:26:53,842 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:26:54,037 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0111, R@10: 0.0127, NDCG@10: 0.0130, Coverage: 0.0238
-2025-06-16 21:26:54,134 - src.optimization.hyperparameter_tuning - INFO - Trial 60: {'factors': 120, 'iterations': 125, 'learning_rate': 0.0004396579259210826, 'regularization': 0.0005036845610010775, 'algorithm': 'bpr', 'verify_negative_samples': False, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:54,134 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:26:54,134 - src.models.bpr_model - INFO - Configuration: {'factors': 120, 'iterations': 125, 'learning_rate': 0.0004396579259210826, 'regularization': 0.0005036845610010775, 'algorithm': 'bpr', 'verify_negative_samples': False, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:54,610 - src.models.bpr_model - INFO - Training completed in 0.48 seconds
-2025-06-16 21:26:54,610 - src.models.bpr_model - INFO - Model size: Users (943, 121), Items (1682, 121)
-2025-06-16 21:26:54,610 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:26:54,610 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:26:54,804 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0046, R@10: 0.0075, NDCG@10: 0.0046, Coverage: 0.0107
-2025-06-16 21:26:54,898 - src.optimization.hyperparameter_tuning - INFO - Trial 61: {'factors': 80, 'iterations': 125, 'learning_rate': 0.0014206792710932871, 'regularization': 0.000399203239563271, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:54,899 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:26:54,899 - src.models.bpr_model - INFO - Configuration: {'factors': 80, 'iterations': 125, 'learning_rate': 0.0014206792710932871, 'regularization': 0.000399203239563271, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:55,339 - src.models.bpr_model - INFO - Training completed in 0.44 seconds
-2025-06-16 21:26:55,339 - src.models.bpr_model - INFO - Model size: Users (943, 81), Items (1682, 81)
-2025-06-16 21:26:55,339 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:26:55,339 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:26:55,535 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0104, R@10: 0.0121, NDCG@10: 0.0123, Coverage: 0.0238
-2025-06-16 21:26:55,648 - src.optimization.hyperparameter_tuning - INFO - Trial 62: {'factors': 190, 'iterations': 100, 'learning_rate': 0.0020376809868531322, 'regularization': 0.00014468907369119706, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:55,648 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:26:55,648 - src.models.bpr_model - INFO - Configuration: {'factors': 190, 'iterations': 100, 'learning_rate': 0.0020376809868531322, 'regularization': 0.00014468907369119706, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:56,063 - src.models.bpr_model - INFO - Training completed in 0.41 seconds
-2025-06-16 21:26:56,063 - src.models.bpr_model - INFO - Model size: Users (943, 191), Items (1682, 191)
-2025-06-16 21:26:56,063 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:26:56,063 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:26:56,269 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0116, R@10: 0.0144, NDCG@10: 0.0141, Coverage: 0.0256
-2025-06-16 21:26:56,355 - src.optimization.hyperparameter_tuning - INFO - Trial 63: {'factors': 140, 'iterations': 200, 'learning_rate': 0.0007387984631918753, 'regularization': 0.004549693119634304, 'algorithm': 'bpr', 'verify_negative_samples': False, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:56,355 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:26:56,355 - src.models.bpr_model - INFO - Configuration: {'factors': 140, 'iterations': 200, 'learning_rate': 0.0007387984631918753, 'regularization': 0.004549693119634304, 'algorithm': 'bpr', 'verify_negative_samples': False, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:57,209 - src.models.bpr_model - INFO - Training completed in 0.85 seconds
-2025-06-16 21:26:57,209 - src.models.bpr_model - INFO - Model size: Users (943, 141), Items (1682, 141)
-2025-06-16 21:26:57,209 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:26:57,209 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:26:57,425 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0049, R@10: 0.0062, NDCG@10: 0.0059, Coverage: 0.0107
-2025-06-16 21:26:57,543 - src.optimization.hyperparameter_tuning - INFO - Trial 64: {'factors': 20, 'iterations': 150, 'learning_rate': 0.001377706534418778, 'regularization': 0.0005262488096228407, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:57,543 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:26:57,543 - src.models.bpr_model - INFO - Configuration: {'factors': 20, 'iterations': 150, 'learning_rate': 0.001377706534418778, 'regularization': 0.0005262488096228407, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:58,026 - src.models.bpr_model - INFO - Training completed in 0.48 seconds
-2025-06-16 21:26:58,026 - src.models.bpr_model - INFO - Model size: Users (943, 21), Items (1682, 21)
-2025-06-16 21:26:58,026 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:26:58,026 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:26:58,233 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0102, R@10: 0.0121, NDCG@10: 0.0124, Coverage: 0.0315
-2025-06-16 21:26:58,333 - src.optimization.hyperparameter_tuning - INFO - Trial 65: {'factors': 180, 'iterations': 125, 'learning_rate': 0.0004655299724645064, 'regularization': 0.00017675717999348782, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:58,333 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:26:58,333 - src.models.bpr_model - INFO - Configuration: {'factors': 180, 'iterations': 125, 'learning_rate': 0.0004655299724645064, 'regularization': 0.00017675717999348782, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:58,821 - src.models.bpr_model - INFO - Training completed in 0.49 seconds
-2025-06-16 21:26:58,821 - src.models.bpr_model - INFO - Model size: Users (943, 181), Items (1682, 181)
-2025-06-16 21:26:58,822 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:26:58,822 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:26:59,056 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0100, R@10: 0.0106, NDCG@10: 0.0114, Coverage: 0.0244
-2025-06-16 21:26:59,173 - src.optimization.hyperparameter_tuning - INFO - Trial 66: {'factors': 90, 'iterations': 100, 'learning_rate': 0.0023225440054349014, 'regularization': 8.492935741365943e-05, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:59,174 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:26:59,174 - src.models.bpr_model - INFO - Configuration: {'factors': 90, 'iterations': 100, 'learning_rate': 0.0023225440054349014, 'regularization': 8.492935741365943e-05, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:59,528 - src.models.bpr_model - INFO - Training completed in 0.35 seconds
-2025-06-16 21:26:59,528 - src.models.bpr_model - INFO - Model size: Users (943, 91), Items (1682, 91)
-2025-06-16 21:26:59,528 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:26:59,528 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:26:59,747 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0106, R@10: 0.0106, NDCG@10: 0.0120, Coverage: 0.0291
-2025-06-16 21:26:59,845 - src.optimization.hyperparameter_tuning - INFO - Trial 67: {'factors': 190, 'iterations': 125, 'learning_rate': 0.0009023033962854211, 'regularization': 0.0003590164063839848, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:26:59,845 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:26:59,845 - src.models.bpr_model - INFO - Configuration: {'factors': 190, 'iterations': 125, 'learning_rate': 0.0009023033962854211, 'regularization': 0.0003590164063839848, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:00,377 - src.models.bpr_model - INFO - Training completed in 0.53 seconds
-2025-06-16 21:27:00,378 - src.models.bpr_model - INFO - Model size: Users (943, 191), Items (1682, 191)
-2025-06-16 21:27:00,378 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:27:00,378 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:27:00,592 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0114, R@10: 0.0132, NDCG@10: 0.0132, Coverage: 0.0238
-2025-06-16 21:27:00,714 - src.optimization.hyperparameter_tuning - INFO - Trial 68: {'factors': 150, 'iterations': 150, 'learning_rate': 0.0014770404478931438, 'regularization': 2.95519383412763e-05, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:00,714 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:27:00,714 - src.models.bpr_model - INFO - Configuration: {'factors': 150, 'iterations': 150, 'learning_rate': 0.0014770404478931438, 'regularization': 2.95519383412763e-05, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:01,306 - src.models.bpr_model - INFO - Training completed in 0.59 seconds
-2025-06-16 21:27:01,306 - src.models.bpr_model - INFO - Model size: Users (943, 151), Items (1682, 151)
-2025-06-16 21:27:01,306 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:27:01,306 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:27:01,511 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0099, R@10: 0.0106, NDCG@10: 0.0117, Coverage: 0.0262
-2025-06-16 21:27:01,612 - src.optimization.hyperparameter_tuning - INFO - Trial 69: {'factors': 60, 'iterations': 150, 'learning_rate': 0.00022845941818370338, 'regularization': 4.36422973415669e-05, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:01,612 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:27:01,612 - src.models.bpr_model - INFO - Configuration: {'factors': 60, 'iterations': 150, 'learning_rate': 0.00022845941818370338, 'regularization': 4.36422973415669e-05, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:02,081 - src.models.bpr_model - INFO - Training completed in 0.47 seconds
-2025-06-16 21:27:02,082 - src.models.bpr_model - INFO - Model size: Users (943, 61), Items (1682, 61)
-2025-06-16 21:27:02,082 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:27:02,082 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:27:02,280 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0107, R@10: 0.0112, NDCG@10: 0.0121, Coverage: 0.0232
-2025-06-16 21:27:02,376 - src.optimization.hyperparameter_tuning - INFO - Trial 70: {'factors': 120, 'iterations': 300, 'learning_rate': 0.00015805479489849314, 'regularization': 5.769502018089298e-05, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:02,376 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:27:02,376 - src.models.bpr_model - INFO - Configuration: {'factors': 120, 'iterations': 300, 'learning_rate': 0.00015805479489849314, 'regularization': 5.769502018089298e-05, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:02,741 - src.models.bpr_model - INFO - Training completed in 0.36 seconds
-2025-06-16 21:27:02,741 - src.models.bpr_model - INFO - Model size: Users (943, 121), Items (1682, 121)
-2025-06-16 21:27:02,741 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:27:02,741 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:27:02,985 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0109, R@10: 0.0119, NDCG@10: 0.0123, Coverage: 0.0238
-2025-06-16 21:27:03,111 - src.optimization.hyperparameter_tuning - INFO - Trial 71: {'factors': 90, 'iterations': 175, 'learning_rate': 0.00034218259588215954, 'regularization': 1.6946543363424143e-05, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:03,111 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:27:03,111 - src.models.bpr_model - INFO - Configuration: {'factors': 90, 'iterations': 175, 'learning_rate': 0.00034218259588215954, 'regularization': 1.6946543363424143e-05, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:03,629 - src.models.bpr_model - INFO - Training completed in 0.52 seconds
-2025-06-16 21:27:03,629 - src.models.bpr_model - INFO - Model size: Users (943, 91), Items (1682, 91)
-2025-06-16 21:27:03,629 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:27:03,629 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:27:03,826 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0109, R@10: 0.0126, NDCG@10: 0.0125, Coverage: 0.0238
-2025-06-16 21:27:03,952 - src.optimization.hyperparameter_tuning - INFO - Trial 72: {'factors': 30, 'iterations': 175, 'learning_rate': 0.0007356825165727512, 'regularization': 2.558655572128204e-05, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:03,953 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:27:03,953 - src.models.bpr_model - INFO - Configuration: {'factors': 30, 'iterations': 175, 'learning_rate': 0.0007356825165727512, 'regularization': 2.558655572128204e-05, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:04,435 - src.models.bpr_model - INFO - Training completed in 0.48 seconds
-2025-06-16 21:27:04,435 - src.models.bpr_model - INFO - Model size: Users (943, 31), Items (1682, 31)
-2025-06-16 21:27:04,435 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:27:04,435 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:27:04,623 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0105, R@10: 0.0112, NDCG@10: 0.0124, Coverage: 0.0250
-2025-06-16 21:27:04,810 - src.optimization.hyperparameter_tuning - INFO - Trial 73: {'factors': 190, 'iterations': 150, 'learning_rate': 0.0878899586757364, 'regularization': 0.0008672659783612832, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:04,811 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:27:04,811 - src.models.bpr_model - INFO - Configuration: {'factors': 190, 'iterations': 150, 'learning_rate': 0.0878899586757364, 'regularization': 0.0008672659783612832, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:05,492 - src.models.bpr_model - INFO - Training completed in 0.68 seconds
-2025-06-16 21:27:05,492 - src.models.bpr_model - INFO - Model size: Users (943, 191), Items (1682, 191)
-2025-06-16 21:27:05,492 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:27:05,492 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:27:05,702 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0087, R@10: 0.0140, NDCG@10: 0.0117, Coverage: 0.4382
-2025-06-16 21:27:05,809 - src.optimization.hyperparameter_tuning - INFO - Trial 74: {'factors': 180, 'iterations': 125, 'learning_rate': 0.0023477336813025047, 'regularization': 0.0001184486526033949, 'algorithm': 'lmf', 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:05,809 - src.models.bpr_model - INFO - Training LMF model...
-2025-06-16 21:27:05,809 - src.models.bpr_model - INFO - Configuration: {'factors': 180, 'iterations': 125, 'learning_rate': 0.0023477336813025047, 'regularization': 0.0001184486526033949, 'algorithm': 'lmf', 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:07,078 - src.models.bpr_model - INFO - Training completed in 1.27 seconds
-2025-06-16 21:27:07,078 - src.models.bpr_model - INFO - Model size: Users (943, 182), Items (1682, 182)
-2025-06-16 21:27:07,078 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:27:07,078 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:27:07,284 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0053, R@10: 0.0084, NDCG@10: 0.0061, Coverage: 0.4649
-2025-06-16 21:27:07,376 - src.optimization.hyperparameter_tuning - INFO - Trial 75: {'factors': 110, 'iterations': 100, 'learning_rate': 0.00015293948676977373, 'regularization': 0.001304437039132637, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:07,376 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:27:07,376 - src.models.bpr_model - INFO - Configuration: {'factors': 110, 'iterations': 100, 'learning_rate': 0.00015293948676977373, 'regularization': 0.001304437039132637, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:07,708 - src.models.bpr_model - INFO - Training completed in 0.33 seconds
-2025-06-16 21:27:07,708 - src.models.bpr_model - INFO - Model size: Users (943, 111), Items (1682, 111)
-2025-06-16 21:27:07,708 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:27:07,708 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:27:07,912 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0108, R@10: 0.0117, NDCG@10: 0.0123, Coverage: 0.0238
-2025-06-16 21:27:08,027 - src.optimization.hyperparameter_tuning - INFO - Trial 76: {'factors': 60, 'iterations': 175, 'learning_rate': 0.00026400964223146663, 'regularization': 0.00020307717089758858, 'algorithm': 'als', 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:08,037 - src.models.bpr_model - INFO - Training ALS model...
-2025-06-16 21:27:08,037 - src.models.bpr_model - INFO - Configuration: {'factors': 60, 'iterations': 175, 'learning_rate': 0.00026400964223146663, 'regularization': 0.00020307717089758858, 'algorithm': 'als', 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
-2025-06-16 21:27:09,735 - src.models.bpr_model - INFO - Training completed in 1.70 seconds
-2025-06-16 21:27:09,735 - src.models.bpr_model - INFO - Model size: Users (943, 60), Items (1682, 60)
-2025-06-16 21:27:09,735 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:27:09,735 - src.evaluation.evaluator - INFO - Generating recommendations for 906 test users...
-2025-06-16 21:27:09,941 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0109, R@10: 0.0152, NDCG@10: 0.0154, Coverage: 0.1706
-2025-06-16 21:27:09,984 - src.optimization.hyperparameter_tuning - INFO - Best BPR parameters: {'factors': 180, 'iterations': 150, 'learning_rate': 0.0015624694200954295, 'regularization': 0.0005561590554128844, 'algorithm': 'bpr', 'verify_negative_samples': True}
-2025-06-16 21:27:09,986 - src.optimization.hyperparameter_tuning - INFO - Best Precision@10: 0.0155
-2025-06-16 21:27:11,369 - src.optimization.hyperparameter_tuning - INFO - Optimization results saved to results/optimization
-2025-06-16 21:27:11,369 - __main__ - INFO - Updating BPR config with best params: {'factors': 180, 'iterations': 150, 'learning_rate': 0.0015624694200954295, 'regularization': 0.0005561590554128844, 'algorithm': 'bpr', 'verify_negative_samples': True}
-2025-06-16 21:27:11,369 - __main__ - INFO - 
-======================== STEP 3: Training Final Models ========================
-2025-06-16 21:27:11,369 - __main__ - INFO - 
---- Training PMF Model ---
-2025-06-16 21:27:11,369 - __main__ - INFO - Final PMF Configuration: {'algorithm': 'svd', 'n_factors': 160, 'n_epochs': 32, 'learning_rate': 0.01562834216905404, 'regularization': 0.09996927859063141, 'biased': False, 'reg_pu': None, 'reg_qi': None, 'random_state': 42, 'verbose': True, 'use_biased': True, 'reg_bu': 0.017432855230655284, 'reg_bi': 0.029349060168276663}
-2025-06-16 21:27:11,369 - src.models.pmf_model - INFO - Training PMF model...
-2025-06-16 21:27:11,369 - src.models.pmf_model - INFO - Configuration: {'algorithm': 'svd', 'n_factors': 160, 'n_epochs': 32, 'learning_rate': 0.01562834216905404, 'regularization': 0.09996927859063141, 'biased': False, 'reg_pu': None, 'reg_qi': None, 'random_state': 42, 'verbose': True, 'use_biased': True, 'reg_bu': 0.017432855230655284, 'reg_bi': 0.029349060168276663}
-2025-06-16 21:27:12,373 - src.models.pmf_model - INFO - PMF training completed in 1.00 seconds
-2025-06-16 21:27:12,373 - src.models.pmf_model - INFO - Model size: Users (943, 160), Items (1653, 160)
-2025-06-16 21:27:12,373 - __main__ - INFO - 
---- Training BPR-MF Model ---
-2025-06-16 21:27:12,373 - __main__ - INFO - Final BPR Configuration: {'algorithm': 'bpr', 'factors': 180, 'iterations': 150, 'learning_rate': 0.0015624694200954295, 'regularization': 0.0005561590554128844, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42, 'verify_negative_samples': True}
-2025-06-16 21:27:12,373 - src.models.bpr_model - INFO - Training BPR model...
-2025-06-16 21:27:12,373 - src.models.bpr_model - INFO - Configuration: {'algorithm': 'bpr', 'factors': 180, 'iterations': 150, 'learning_rate': 0.0015624694200954295, 'regularization': 0.0005561590554128844, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42, 'verify_negative_samples': True}
-2025-06-16 21:27:12,990 - src.models.bpr_model - INFO - Training completed in 0.62 seconds
-2025-06-16 21:27:12,990 - src.models.bpr_model - INFO - Model size: Users (943, 181), Items (1682, 181)
-2025-06-16 21:27:12,990 - __main__ - INFO - 
---- Training LightFM Model ---
-2025-06-16 21:27:12,990 - __main__ - INFO - Final LightFM Configuration: {'no_components': 100, 'learning_rate': 0.01, 'loss': 'warp', 'max_sampled': 10, 'item_alpha': 1e-06, 'user_alpha': 1e-06, 'epochs': 50, 'num_threads': 20, 'random_state': 42}
-2025-06-16 21:27:12,990 - src.models.lightfm_model - INFO - Training LightFM model...
-2025-06-16 21:27:12,990 - src.models.lightfm_model - INFO - Configuration: {'no_components': 100, 'learning_rate': 0.01, 'loss': 'warp', 'max_sampled': 10, 'item_alpha': 1e-06, 'user_alpha': 1e-06, 'epochs': 50, 'num_threads': 20, 'random_state': 42}
-2025-06-16 21:27:18,431 - src.models.lightfm_model - INFO - LightFM training completed in 5.44 seconds
-2025-06-16 21:27:18,432 - __main__ - INFO - 
-======================= STEP 4: Evaluating Final Models =======================
-2025-06-16 21:27:18,432 - __main__ - INFO - 
---- Evaluating PMF Model ---
-2025-06-16 21:27:18,432 - src.evaluation.evaluator - INFO - Evaluating PMF model...
-2025-06-16 21:27:18,475 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9244, MAE: 0.7353
-2025-06-16 21:27:18,475 - __main__ - INFO - 
---- Evaluating BPR-MF Model ---
-2025-06-16 21:27:18,475 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:27:18,475 - src.evaluation.evaluator - INFO - Generating recommendations for 936 test users...
-2025-06-16 21:27:19,507 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0233, R@10: 0.0121, NDCG@10: 0.0241, Coverage: 0.0666
-2025-06-16 21:27:19,507 - __main__ - INFO - 
---- Evaluating LightFM Model ---
-2025-06-16 21:27:19,507 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
-2025-06-16 21:27:19,507 - src.evaluation.evaluator - INFO - Generating recommendations for 936 test users...
-2025-06-16 21:27:20,720 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0232, R@10: 0.0135, NDCG@10: 0.0263, Coverage: 0.3115
-2025-06-16 21:27:20,720 - __main__ - INFO - 
-============================ STEP 5: Saving Results ============================
-2025-06-16 21:27:20,720 - __main__ - INFO - 
-============================== EXECUTION COMPLETE ==============================
-2025-06-16 21:27:20,720 - __main__ - INFO - Total execution time: 0.87 minutes
-2025-06-16 21:27:20,720 - __main__ - INFO - Final PMF RMSE: 0.9244
-2025-06-16 21:27:20,720 - __main__ - INFO - Final BPR Precision@10: 0.0233
-2025-06-16 21:27:20,720 - __main__ - INFO - Final LightFM Precision@10: 0.0232
-2025-06-16 21:27:20,720 - __main__ - INFO - Results saved to: results
-2025-06-16 21:27:20,720 - __main__ - INFO - ================================================================================
+2025-06-16 23:27:53,962 - src.data.data_loader - INFO - Loaded 100,000 ratings from 943 users and 1,682 items
+2025-06-16 23:27:53,962 - src.data.data_loader - INFO - Loading movie metadata with genres...
+2025-06-16 23:27:53,972 - src.data.data_loader - INFO - Loaded metadata for 1,682 movies
+2025-06-16 23:27:53,975 - src.data.data_loader - INFO - Train size: 80,000, Test size: 20,000
+2025-06-16 23:27:54,024 - src.data.data_loader - INFO - Converting to implicit feedback (threshold >= 3.0)...
+2025-06-16 23:27:54,038 - src.data.data_loader - INFO - Implicit matrices created - Shape: (943, 1682), Train interactions: 65,988, Test interactions: 16,532
+2025-06-16 23:27:54,042 - src.data.data_loader - INFO - Train: 72000, Val: 8000
+2025-06-16 23:27:54,042 - __main__ - INFO - 
+ Tuning PMF Hyperparameters
+2025-06-16 23:27:54,102 - src.optimization.hyperparameter_tuning - INFO -  hyperparameter tuning with Optuna
+2025-06-16 23:27:54,430 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:27:54,430 - src.models.pmf_model - INFO - Configuration: {'n_factors': 50, 'n_epochs': 20, 'learning_rate': 0.005, 'regularization': 0.02, 'biased': False, 'random_state': 42, 'verbose': False}
+2025-06-16 23:27:54,634 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:27:54,685 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9439, MAE: 0.7430
+2025-06-16 23:27:54,767 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:27:54,767 - src.models.pmf_model - INFO - Configuration: {'n_factors': 170, 'n_epochs': 23, 'learning_rate': 0.021874033076785992, 'regularization': 0.06287680883966879, 'biased': True, 'reg_bu': 0.006503920687081461, 'reg_bi': 0.0005838891112221526, 'random_state': 42, 'verbose': False}
+2025-06-16 23:27:55,328 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:27:55,347 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9154, MAE: 0.7234
+2025-06-16 23:27:55,437 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:27:55,437 - src.models.pmf_model - INFO - Configuration: {'n_factors': 190, 'n_epochs': 32, 'learning_rate': 0.05324041631010448, 'regularization': 0.08745230511573543, 'biased': True, 'reg_bu': 0.009017301995903983, 'reg_bi': 0.029307167263596848, 'random_state': 42, 'verbose': False}
+2025-06-16 23:27:56,240 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:27:56,261 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9211, MAE: 0.7295
+2025-06-16 23:27:56,341 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:27:56,341 - src.models.pmf_model - INFO - Configuration: {'n_factors': 80, 'n_epochs': 21, 'learning_rate': 0.01838847169110671, 'regularization': 0.09988993206213086, 'biased': True, 'reg_bu': 0.017615228252530132, 'reg_bi': 0.00027314676400917113, 'random_state': 42, 'verbose': False}
+2025-06-16 23:27:56,673 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:27:56,694 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9107, MAE: 0.7220
+2025-06-16 23:27:56,779 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:27:56,779 - src.models.pmf_model - INFO - Configuration: {'n_factors': 140, 'n_epochs': 30, 'learning_rate': 0.013504060225431503, 'regularization': 0.07951773090673402, 'biased': True, 'reg_bu': 0.004811666256722416, 'reg_bi': 0.016617284394109477, 'random_state': 42, 'verbose': False}
+2025-06-16 23:27:57,479 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:27:57,500 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9079, MAE: 0.7172
+2025-06-16 23:27:57,616 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:27:57,616 - src.models.pmf_model - INFO - Configuration: {'n_factors': 180, 'n_epochs': 33, 'learning_rate': 0.015697113034945556, 'regularization': 0.05048077739853894, 'biased': True, 'reg_bu': 0.0005304748503302375, 'reg_bi': 0.00015728727441917246, 'random_state': 42, 'verbose': False}
+2025-06-16 23:27:58,497 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:27:58,518 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9207, MAE: 0.7271
+2025-06-16 23:27:58,614 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:27:58,614 - src.models.pmf_model - INFO - Configuration: {'n_factors': 190, 'n_epochs': 26, 'learning_rate': 0.020613764466048564, 'regularization': 0.06885285635045223, 'biased': True, 'reg_bu': 0.0345858528401612, 'reg_bi': 0.042162993465093404, 'random_state': 42, 'verbose': False}
+2025-06-16 23:27:59,279 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:27:59,298 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9121, MAE: 0.7207
+2025-06-16 23:27:59,386 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:27:59,386 - src.models.pmf_model - INFO - Configuration: {'n_factors': 130, 'n_epochs': 25, 'learning_rate': 0.017240888731010772, 'regularization': 0.08921074655734348, 'biased': True, 'reg_bu': 0.05371411840113824, 'reg_bi': 0.02240858911036459, 'random_state': 42, 'verbose': False}
+2025-06-16 23:27:59,934 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:27:59,954 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9107, MAE: 0.7210
+2025-06-16 23:28:00,037 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:28:00,037 - src.models.pmf_model - INFO - Configuration: {'n_factors': 200, 'n_epochs': 31, 'learning_rate': 0.00818037051955416, 'regularization': 0.09981016105764634, 'biased': True, 'reg_bu': 0.007067315848582427, 'reg_bi': 0.0002110648932384853, 'random_state': 42, 'verbose': False}
+2025-06-16 23:28:00,922 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:28:00,943 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9094, MAE: 0.7224
+2025-06-16 23:28:01,029 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:28:01,029 - src.models.pmf_model - INFO - Configuration: {'n_factors': 170, 'n_epochs': 41, 'learning_rate': 0.0009169781125500014, 'regularization': 0.07930865149308441, 'biased': True, 'reg_bu': 0.0015968825343069175, 'reg_bi': 0.00030245921540012833, 'random_state': 42, 'verbose': False}
+2025-06-16 23:28:02,068 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:28:02,087 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9485, MAE: 0.7560
+2025-06-16 23:28:02,176 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:28:02,176 - src.models.pmf_model - INFO - Configuration: {'n_factors': 180, 'n_epochs': 28, 'learning_rate': 0.01087695579000267, 'regularization': 0.06384958714180614, 'biased': True, 'reg_bu': 0.0032100171170585767, 'reg_bi': 0.0001299722424532894, 'random_state': 42, 'verbose': False}
+2025-06-16 23:28:02,903 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:28:02,922 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9139, MAE: 0.7228
+2025-06-16 23:28:03,038 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:28:03,039 - src.models.pmf_model - INFO - Configuration: {'n_factors': 190, 'n_epochs': 23, 'learning_rate': 0.0257544728269776, 'regularization': 0.08586847307833008, 'biased': True, 'reg_bu': 0.00556149528909625, 'reg_bi': 0.06471595770545199, 'random_state': 42, 'verbose': False}
+2025-06-16 23:28:03,663 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:28:03,683 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9100, MAE: 0.7201
+2025-06-16 23:28:03,759 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:28:03,759 - src.models.pmf_model - INFO - Configuration: {'n_factors': 180, 'n_epochs': 29, 'learning_rate': 0.0004869302537251107, 'regularization': 0.07166665231916892, 'biased': False, 'random_state': 42, 'verbose': False}
+2025-06-16 23:28:04,522 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:28:04,540 - src.evaluation.evaluator - INFO - PMF Results RMSE: 1.5665, MAE: 1.2333
+2025-06-16 23:28:04,628 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:28:04,628 - src.models.pmf_model - INFO - Configuration: {'n_factors': 200, 'n_epochs': 32, 'learning_rate': 0.013214992914931794, 'regularization': 0.08842140005136274, 'biased': True, 'reg_bu': 0.00433755526788503, 'reg_bi': 0.0003843653112113723, 'random_state': 42, 'verbose': False}
+2025-06-16 23:28:05,603 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:28:05,631 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9065, MAE: 0.7181
+2025-06-16 23:28:05,709 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:28:05,710 - src.models.pmf_model - INFO - Configuration: {'n_factors': 180, 'n_epochs': 24, 'learning_rate': 0.01663062595586397, 'regularization': 0.07692529298053917, 'biased': True, 'reg_bu': 0.007996216406926823, 'reg_bi': 0.00018457457696380018, 'random_state': 42, 'verbose': False}
+2025-06-16 23:28:06,460 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:28:06,492 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9110, MAE: 0.7209
+2025-06-16 23:28:06,581 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:28:06,581 - src.models.pmf_model - INFO - Configuration: {'n_factors': 130, 'n_epochs': 38, 'learning_rate': 0.020542350959504116, 'regularization': 0.08893579688877284, 'biased': True, 'reg_bu': 0.006053466208021088, 'reg_bi': 0.0004571378412215838, 'random_state': 42, 'verbose': False}
+2025-06-16 23:28:07,437 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:28:07,457 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9122, MAE: 0.7212
+2025-06-16 23:28:07,539 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:28:07,539 - src.models.pmf_model - INFO - Configuration: {'n_factors': 150, 'n_epochs': 36, 'learning_rate': 0.013881153594649679, 'regularization': 0.06016359723454589, 'biased': True, 'reg_bu': 0.0003004224241435088, 'reg_bi': 0.00024573622483822105, 'random_state': 42, 'verbose': False}
+2025-06-16 23:28:08,457 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:28:08,485 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9155, MAE: 0.7216
+2025-06-16 23:28:08,599 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:28:08,600 - src.models.pmf_model - INFO - Configuration: {'n_factors': 170, 'n_epochs': 34, 'learning_rate': 0.009181789818213952, 'regularization': 0.09922541166789968, 'biased': True, 'reg_bu': 0.07283428599874835, 'reg_bi': 0.0012468547408796091, 'random_state': 42, 'verbose': False}
+2025-06-16 23:28:09,541 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:28:09,572 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9083, MAE: 0.7208
+2025-06-16 23:28:09,646 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:28:09,646 - src.models.pmf_model - INFO - Configuration: {'n_factors': 160, 'n_epochs': 18, 'learning_rate': 0.02388477877910881, 'regularization': 0.07170135932675846, 'biased': True, 'reg_bu': 0.02606099641523416, 'reg_bi': 0.00016062421077842634, 'random_state': 42, 'verbose': False}
+2025-06-16 23:28:10,092 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:28:10,111 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9134, MAE: 0.7212
+2025-06-16 23:28:10,190 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:28:10,190 - src.models.pmf_model - INFO - Configuration: {'n_factors': 180, 'n_epochs': 22, 'learning_rate': 0.011847872640413048, 'regularization': 0.09997075142480527, 'biased': True, 'reg_bu': 0.06101915758789241, 'reg_bi': 0.005984584861594206, 'random_state': 42, 'verbose': False}
+2025-06-16 23:28:10,767 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:28:10,789 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9113, MAE: 0.7239
+2025-06-16 23:28:10,817 - src.optimization.hyperparameter_tuning - INFO - Best PMF parameters: {'n_factors': 160, 'n_epochs': 32, 'learning_rate': 0.01562834216905404, 'regularization': 0.09996927859063141, 'use_biased': True, 'reg_bu': 0.017432855230655284, 'reg_bi': 0.029349060168276663}
+2025-06-16 23:28:10,820 - src.optimization.hyperparameter_tuning - INFO - Best RMSE: 0.8733
+2025-06-16 23:28:12,645 - src.optimization.hyperparameter_tuning - INFO - Optimization results saved to results/optimization
+2025-06-16 23:28:12,645 - __main__ - INFO - PMF config best params: {'n_factors': 160, 'n_epochs': 32, 'learning_rate': 0.01562834216905404, 'regularization': 0.09996927859063141, 'use_biased': True, 'reg_bu': 0.017432855230655284, 'reg_bi': 0.029349060168276663}
+2025-06-16 23:28:12,645 - __main__ - INFO - 
+ Tuning BPR Hyperparameters 
+2025-06-16 23:28:12,645 - src.data.data_loader - INFO - Converting to implicit feedback (threshold >= 3.0)...
+2025-06-16 23:28:12,657 - src.data.data_loader - INFO - Implicit matrices created - Shape: (943, 1682), Train interactions: 59,362, Test interactions: 6,626
+2025-06-16 23:28:12,657 - src.optimization.hyperparameter_tuning - INFO - BPR-MF hyperparameter tuning
+2025-06-16 23:28:12,756 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:12,756 - src.models.bpr_model - INFO - Configuration: {'factors': 150, 'iterations': 125, 'learning_rate': 0.001172219133218125, 'regularization': 0.0001005231571123295, 'algorithm': 'lmf', 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:13,648 - src.models.bpr_model - INFO - Training completed in 0.89 seconds
+2025-06-16 23:28:13,648 - src.models.bpr_model - INFO - Model size: Users (943, 152), Items (1682, 152)
+2025-06-16 23:28:13,648 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:14,023 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0033, R@10: 0.0043, NDCG@10: 0.0046, Coverage: 0.4560
+2025-06-16 23:28:14,106 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:14,106 - src.models.bpr_model - INFO - Configuration: {'factors': 140, 'iterations': 150, 'learning_rate': 0.0001738063568072285, 'regularization': 3.99309255418372e-05, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:14,512 - src.models.bpr_model - INFO - Training completed in 0.41 seconds
+2025-06-16 23:28:14,512 - src.models.bpr_model - INFO - Model size: Users (943, 141), Items (1682, 141)
+2025-06-16 23:28:14,512 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:14,792 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0108, R@10: 0.0116, NDCG@10: 0.0121, Coverage: 0.0238
+2025-06-16 23:28:14,884 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:14,884 - src.models.bpr_model - INFO - Configuration: {'factors': 110, 'iterations': 75, 'learning_rate': 0.0018671168617653284, 'regularization': 0.007656343046790304, 'algorithm': 'lmf', 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:15,215 - src.models.bpr_model - INFO - Training completed in 0.33 seconds
+2025-06-16 23:28:15,215 - src.models.bpr_model - INFO - Model size: Users (943, 112), Items (1682, 112)
+2025-06-16 23:28:15,215 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:15,538 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0042, R@10: 0.0041, NDCG@10: 0.0053, Coverage: 0.4542
+2025-06-16 23:28:15,616 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:15,616 - src.models.bpr_model - INFO - Configuration: {'factors': 100, 'iterations': 75, 'learning_rate': 0.0016572862353266215, 'regularization': 0.007133829008009484, 'algorithm': 'lmf', 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:16,025 - src.models.bpr_model - INFO - Training completed in 0.41 seconds
+2025-06-16 23:28:16,025 - src.models.bpr_model - INFO - Model size: Users (943, 102), Items (1682, 102)
+2025-06-16 23:28:16,025 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:16,290 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0051, R@10: 0.0059, NDCG@10: 0.0063, Coverage: 0.4643
+2025-06-16 23:28:16,392 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:16,392 - src.models.bpr_model - INFO - Configuration: {'factors': 110, 'iterations': 75, 'learning_rate': 0.001356696973414917, 'regularization': 0.009630144985498126, 'algorithm': 'lmf', 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:16,782 - src.models.bpr_model - INFO - Training completed in 0.39 seconds
+2025-06-16 23:28:16,783 - src.models.bpr_model - INFO - Model size: Users (943, 112), Items (1682, 112)
+2025-06-16 23:28:16,783 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:17,085 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0042, R@10: 0.0041, NDCG@10: 0.0053, Coverage: 0.4518
+2025-06-16 23:28:17,181 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:17,181 - src.models.bpr_model - INFO - Configuration: {'factors': 120, 'iterations': 100, 'learning_rate': 0.009657476716153204, 'regularization': 0.006134798288094998, 'algorithm': 'lmf', 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:17,736 - src.models.bpr_model - INFO - Training completed in 0.55 seconds
+2025-06-16 23:28:17,736 - src.models.bpr_model - INFO - Model size: Users (943, 122), Items (1682, 122)
+2025-06-16 23:28:17,736 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:18,005 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0032, R@10: 0.0045, NDCG@10: 0.0038, Coverage: 0.4435
+2025-06-16 23:28:18,096 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:18,096 - src.models.bpr_model - INFO - Configuration: {'factors': 100, 'iterations': 75, 'learning_rate': 0.0005304748503302375, 'regularization': 0.0001903564498310186, 'algorithm': 'lmf', 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:18,421 - src.models.bpr_model - INFO - Training completed in 0.32 seconds
+2025-06-16 23:28:18,421 - src.models.bpr_model - INFO - Model size: Users (943, 102), Items (1682, 102)
+2025-06-16 23:28:18,421 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:18,703 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0051, R@10: 0.0059, NDCG@10: 0.0064, Coverage: 0.4649
+2025-06-16 23:28:18,802 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:18,802 - src.models.bpr_model - INFO - Configuration: {'factors': 20, 'iterations': 50, 'learning_rate': 0.0022856490350912423, 'regularization': 0.0016893052010554764, 'algorithm': 'bpr', 'verify_negative_samples': False, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:18,870 - src.models.bpr_model - INFO - Training completed in 0.07 seconds
+2025-06-16 23:28:18,870 - src.models.bpr_model - INFO - Model size: Users (943, 21), Items (1682, 21)
+2025-06-16 23:28:18,870 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:19,138 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0070, R@10: 0.0079, NDCG@10: 0.0081, Coverage: 0.0125
+2025-06-16 23:28:19,262 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:19,262 - src.models.bpr_model - INFO - Configuration: {'factors': 70, 'iterations': 150, 'learning_rate': 0.00044784216302287433, 'regularization': 0.00022071034365195872, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:19,679 - src.models.bpr_model - INFO - Training completed in 0.42 seconds
+2025-06-16 23:28:19,679 - src.models.bpr_model - INFO - Model size: Users (943, 71), Items (1682, 71)
+2025-06-16 23:28:19,679 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:19,984 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0098, R@10: 0.0102, NDCG@10: 0.0111, Coverage: 0.0238
+2025-06-16 23:28:20,120 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:20,120 - src.models.bpr_model - INFO - Configuration: {'factors': 90, 'iterations': 75, 'learning_rate': 0.0008617424778151837, 'regularization': 0.0001405685881172088, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:20,289 - src.models.bpr_model - INFO - Training completed in 0.17 seconds
+2025-06-16 23:28:20,289 - src.models.bpr_model - INFO - Model size: Users (943, 91), Items (1682, 91)
+2025-06-16 23:28:20,289 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:20,582 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0102, R@10: 0.0117, NDCG@10: 0.0120, Coverage: 0.0238
+2025-06-16 23:28:20,665 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:20,665 - src.models.bpr_model - INFO - Configuration: {'factors': 130, 'iterations': 50, 'learning_rate': 0.002786397585675326, 'regularization': 0.0004424590704031881, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:20,883 - src.models.bpr_model - INFO - Training completed in 0.22 seconds
+2025-06-16 23:28:20,883 - src.models.bpr_model - INFO - Model size: Users (943, 131), Items (1682, 131)
+2025-06-16 23:28:20,883 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:21,164 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0103, R@10: 0.0117, NDCG@10: 0.0118, Coverage: 0.0244
+2025-06-16 23:28:21,248 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:21,248 - src.models.bpr_model - INFO - Configuration: {'factors': 10, 'iterations': 125, 'learning_rate': 0.006337194069478434, 'regularization': 0.0050494524799419675, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:21,390 - src.models.bpr_model - INFO - Training completed in 0.14 seconds
+2025-06-16 23:28:21,390 - src.models.bpr_model - INFO - Model size: Users (943, 11), Items (1682, 11)
+2025-06-16 23:28:21,390 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:21,693 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0087, R@10: 0.0149, NDCG@10: 0.0132, Coverage: 0.2467
+2025-06-16 23:28:21,786 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:21,786 - src.models.bpr_model - INFO - Configuration: {'factors': 10, 'iterations': 125, 'learning_rate': 0.0001287427833332163, 'regularization': 0.00027128753513912067, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:21,910 - src.models.bpr_model - INFO - Training completed in 0.12 seconds
+2025-06-16 23:28:21,910 - src.models.bpr_model - INFO - Model size: Users (943, 11), Items (1682, 11)
+2025-06-16 23:28:21,910 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:22,202 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0097, R@10: 0.0100, NDCG@10: 0.0109, Coverage: 0.0238
+2025-06-16 23:28:22,296 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:22,296 - src.models.bpr_model - INFO - Configuration: {'factors': 10, 'iterations': 125, 'learning_rate': 0.0001516473782843542, 'regularization': 0.00023789562206315702, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:22,448 - src.models.bpr_model - INFO - Training completed in 0.15 seconds
+2025-06-16 23:28:22,448 - src.models.bpr_model - INFO - Model size: Users (943, 11), Items (1682, 11)
+2025-06-16 23:28:22,448 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:22,718 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0102, R@10: 0.0104, NDCG@10: 0.0113, Coverage: 0.0238
+2025-06-16 23:28:22,807 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:22,808 - src.models.bpr_model - INFO - Configuration: {'factors': 110, 'iterations': 100, 'learning_rate': 0.0001242180195534996, 'regularization': 0.00030302838490030173, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:23,055 - src.models.bpr_model - INFO - Training completed in 0.25 seconds
+2025-06-16 23:28:23,055 - src.models.bpr_model - INFO - Model size: Users (943, 111), Items (1682, 111)
+2025-06-16 23:28:23,055 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:23,327 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0109, R@10: 0.0117, NDCG@10: 0.0123, Coverage: 0.0238
+2025-06-16 23:28:23,420 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:23,420 - src.models.bpr_model - INFO - Configuration: {'factors': 20, 'iterations': 150, 'learning_rate': 0.00172209044137829, 'regularization': 0.0014073731379197145, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:23,675 - src.models.bpr_model - INFO - Training completed in 0.25 seconds
+2025-06-16 23:28:23,675 - src.models.bpr_model - INFO - Model size: Users (943, 21), Items (1682, 21)
+2025-06-16 23:28:23,675 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:24,025 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0103, R@10: 0.0139, NDCG@10: 0.0125, Coverage: 0.0589
+2025-06-16 23:28:24,107 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:24,107 - src.models.bpr_model - INFO - Configuration: {'factors': 200, 'iterations': 125, 'learning_rate': 0.00011059560620587449, 'regularization': 0.00033988864710081813, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:24,540 - src.models.bpr_model - INFO - Training completed in 0.43 seconds
+2025-06-16 23:28:24,540 - src.models.bpr_model - INFO - Model size: Users (943, 201), Items (1682, 201)
+2025-06-16 23:28:24,540 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:24,902 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0104, R@10: 0.0104, NDCG@10: 0.0116, Coverage: 0.0238
+2025-06-16 23:28:25,006 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:25,006 - src.models.bpr_model - INFO - Configuration: {'factors': 10, 'iterations': 100, 'learning_rate': 0.0001421734150019598, 'regularization': 5.575409226634018e-05, 'algorithm': 'bpr', 'verify_negative_samples': False, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:25,118 - src.models.bpr_model - INFO - Training completed in 0.11 seconds
+2025-06-16 23:28:25,118 - src.models.bpr_model - INFO - Model size: Users (943, 11), Items (1682, 11)
+2025-06-16 23:28:25,119 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:25,457 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0010, R@10: 0.0017, NDCG@10: 0.0014, Coverage: 0.0351
+2025-06-16 23:28:25,560 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:25,560 - src.models.bpr_model - INFO - Configuration: {'factors': 170, 'iterations': 125, 'learning_rate': 0.00010175702146738292, 'regularization': 0.00021303344936055886, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:25,925 - src.models.bpr_model - INFO - Training completed in 0.37 seconds
+2025-06-16 23:28:25,925 - src.models.bpr_model - INFO - Model size: Users (943, 171), Items (1682, 171)
+2025-06-16 23:28:25,926 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:26,292 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0108, R@10: 0.0117, NDCG@10: 0.0121, Coverage: 0.0238
+2025-06-16 23:28:26,415 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:26,415 - src.models.bpr_model - INFO - Configuration: {'factors': 160, 'iterations': 150, 'learning_rate': 0.0019060562628505338, 'regularization': 0.00017185690765830053, 'algorithm': 'bpr', 'verify_negative_samples': True, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42}
+2025-06-16 23:28:26,877 - src.models.bpr_model - INFO - Training completed in 0.46 seconds
+2025-06-16 23:28:26,877 - src.models.bpr_model - INFO - Model size: Users (943, 161), Items (1682, 161)
+2025-06-16 23:28:26,877 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:27,221 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0113, R@10: 0.0146, NDCG@10: 0.0139, Coverage: 0.0505
+2025-06-16 23:28:27,258 - src.optimization.hyperparameter_tuning - INFO - Best BPR parameters: {'factors': 180, 'iterations': 150, 'learning_rate': 0.0015624694200954295, 'regularization': 0.0005561590554128844, 'algorithm': 'bpr', 'verify_negative_samples': True}
+2025-06-16 23:28:27,260 - src.optimization.hyperparameter_tuning - INFO - Best Precision@10: 0.0155
+2025-06-16 23:28:27,424 - src.optimization.hyperparameter_tuning - INFO - Optimization results saved to results/optimization
+2025-06-16 23:28:27,425 - __main__ - INFO - BPR config best params: {'factors': 180, 'iterations': 150, 'learning_rate': 0.0015624694200954295, 'regularization': 0.0005561590554128844, 'algorithm': 'bpr', 'verify_negative_samples': True}
+2025-06-16 23:28:27,425 - __main__ - INFO - Final PMF Configuration: {'algorithm': 'svd', 'n_factors': 160, 'n_epochs': 32, 'learning_rate': 0.01562834216905404, 'regularization': 0.09996927859063141, 'biased': False, 'reg_pu': None, 'reg_qi': None, 'random_state': 42, 'verbose': True, 'use_biased': True, 'reg_bu': 0.017432855230655284, 'reg_bi': 0.029349060168276663}
+2025-06-16 23:28:27,425 - src.models.pmf_model - INFO - Training PMF
+2025-06-16 23:28:27,425 - src.models.pmf_model - INFO - Configuration: {'algorithm': 'svd', 'n_factors': 160, 'n_epochs': 32, 'learning_rate': 0.01562834216905404, 'regularization': 0.09996927859063141, 'biased': False, 'reg_pu': None, 'reg_qi': None, 'random_state': 42, 'verbose': True, 'use_biased': True, 'reg_bu': 0.017432855230655284, 'reg_bi': 0.029349060168276663}
+2025-06-16 23:28:28,310 - __main__ - INFO - Final BPR Configuration: {'algorithm': 'bpr', 'factors': 180, 'iterations': 150, 'learning_rate': 0.0015624694200954295, 'regularization': 0.0005561590554128844, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42, 'verify_negative_samples': True}
+2025-06-16 23:28:28,310 - src.models.bpr_model - INFO - Training BPR
+2025-06-16 23:28:28,311 - src.models.bpr_model - INFO - Configuration: {'algorithm': 'bpr', 'factors': 180, 'iterations': 150, 'learning_rate': 0.0015624694200954295, 'regularization': 0.0005561590554128844, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42, 'verify_negative_samples': True}
+2025-06-16 23:28:28,761 - src.models.bpr_model - INFO - Training completed in 0.45 seconds
+2025-06-16 23:28:28,761 - src.models.bpr_model - INFO - Model size: Users (943, 181), Items (1682, 181)
+2025-06-16 23:28:28,761 - __main__ - INFO - Final LightFM Configuration: {'no_components': 100, 'learning_rate': 0.01, 'loss': 'warp', 'max_sampled': 10, 'item_alpha': 1e-06, 'user_alpha': 1e-06, 'epochs': 50, 'num_threads': 20, 'random_state': 42}
+2025-06-16 23:28:28,761 - src.models.lightfm_model - INFO - Training LightFM model...
+2025-06-16 23:28:28,761 - src.models.lightfm_model - INFO - Configuration: {'no_components': 100, 'learning_rate': 0.01, 'loss': 'warp', 'max_sampled': 10, 'item_alpha': 1e-06, 'user_alpha': 1e-06, 'epochs': 50, 'num_threads': 20, 'random_state': 42}
+2025-06-16 23:28:34,046 - src.models.lightfm_model - INFO - LightFM training completed in 5.28 seconds
+2025-06-16 23:28:34,046 - __main__ - INFO - 
+ Evaluating PMF Model
+2025-06-16 23:28:34,046 - src.evaluation.evaluator - INFO - Evaluating PMF model
+2025-06-16 23:28:34,088 - src.evaluation.evaluator - INFO - PMF Results RMSE: 0.9244, MAE: 0.7353
+2025-06-16 23:28:34,089 - __main__ - INFO - 
+ Evaluating BPR-MF Model
+2025-06-16 23:28:34,089 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:35,164 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0233, R@10: 0.0123, NDCG@10: 0.0243, Coverage: 0.0666
+2025-06-16 23:28:35,164 - __main__ - INFO - 
+ Evaluating LightFM Model
+2025-06-16 23:28:35,164 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model
+2025-06-16 23:28:36,509 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0235, R@10: 0.0137, NDCG@10: 0.0263, Coverage: 0.3038
+2025-06-16 23:28:36,510 - __main__ - INFO - Final PMF RMSE: 0.9244
+2025-06-16 23:28:36,510 - __main__ - INFO - Final BPR Precision@10: 0.0233
+2025-06-16 23:28:36,510 - __main__ - INFO - Final LightFM Precision@10: 0.0235

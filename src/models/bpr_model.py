@@ -1,4 +1,3 @@
-# src/models/bpr_model.py
 from implicit.bpr import BayesianPersonalizedRanking
 from implicit.als import AlternatingLeastSquares
 from implicit.lmf import LogisticMatrixFactorization
@@ -12,20 +11,17 @@ from .base_model import BaseRecommenderModel
 logger = logging.getLogger(__name__)
 
 class BPRModel(BaseRecommenderModel):
-    """Bayesian Personalized Ranking with optimizations and variants."""
     
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.config = config['models']['bpr']
         
-        # Choose algorithm variant
         algorithm = self.config.get('algorithm', 'bpr')
         
         # Use float32 for memory efficiency
         dtype = np.float32 if self.config['dtype'] == 'float32' else np.float64
         
         if algorithm == 'als':
-            # Alternating Least Squares variant
             self.model = AlternatingLeastSquares(
                 factors=self.config['factors'],
                 iterations=self.config['iterations'],
@@ -35,7 +31,6 @@ class BPRModel(BaseRecommenderModel):
                 dtype=dtype
             )
         elif algorithm == 'lmf':
-            # Logistic Matrix Factorization
             self.model = LogisticMatrixFactorization(
                 factors=self.config['factors'],
                 iterations=self.config['iterations'],
@@ -46,7 +41,6 @@ class BPRModel(BaseRecommenderModel):
                 dtype=dtype
             )
         else:
-            # Standard BPR
             self.model = BayesianPersonalizedRanking(
                 factors=self.config['factors'],
                 iterations=self.config['iterations'],
@@ -66,11 +60,9 @@ class BPRModel(BaseRecommenderModel):
         self.item_to_idx = None
         
     def fit(self, train_data: Dict[str, Any]):
-        """Train BPR model with progress tracking."""
-        logger.info(f"Training {self.config.get('algorithm', 'BPR').upper()} model...")
+        logger.info(f"Training BPR")
         logger.info(f"Configuration: {self.config}")
         
-        # Extract necessary data
         self.user_item_matrix = train_data['train_matrix']
         self.item_user_matrix = self.user_item_matrix.T.tocsr()
         self.idx_to_user = train_data['idx_to_user']
@@ -78,12 +70,12 @@ class BPRModel(BaseRecommenderModel):
         self.user_to_idx = train_data['user_to_idx']
         self.item_to_idx = train_data['item_to_idx']
         
-        # Train model with timing
+        # Train model
         start_time = time.time()
         self.model.fit(self.user_item_matrix, show_progress=True)
         self.training_time = time.time() - start_time
         
-        # Store model info
+        # Store model
         self.model_info = {
             'n_users': self.user_item_matrix.shape[0],
             'n_items': self.user_item_matrix.shape[1],
@@ -99,7 +91,6 @@ class BPRModel(BaseRecommenderModel):
                    f"Items {self.model.item_factors.shape}")
     
     def predict(self, user_id: int, item_id: int) -> float:
-        """Predict preference score for a user-item pair."""
         if user_id not in self.user_to_idx:
             logger.debug(f"User {user_id} not in training set")
             return 0.0
@@ -111,7 +102,6 @@ class BPRModel(BaseRecommenderModel):
             logger.debug(f"Item {item_id} not in training set")
             return 0.0
         
-        # Compute dot product of factors
         score = np.dot(
             self.model.user_factors[user_idx],
             self.model.item_factors[item_idx]
@@ -119,7 +109,6 @@ class BPRModel(BaseRecommenderModel):
         return float(score)
     
     def predict_batch(self, user_id: int, item_ids: List[int]) -> np.ndarray:
-        """Predict scores for a user and multiple items efficiently."""
         if user_id not in self.user_to_idx:
             return np.zeros(len(item_ids))
         
@@ -140,14 +129,12 @@ class BPRModel(BaseRecommenderModel):
     def recommend(self, user_id: int, n_items: int = 10,
                   filter_already_liked_items: bool = True,
                   items_to_recommend: Optional[np.ndarray] = None) -> List[Tuple[int, float]]:
-        """Get top-N recommendations for a user."""
         if user_id not in self.user_to_idx:
             logger.warning(f"User {user_id} not in training set")
             return []
         
         user_idx = self.user_to_idx[user_id]
         
-        # Get recommendations
         recommendations, scores = self.model.recommend(
             userid=user_idx,
             user_items=self.user_item_matrix[user_idx],
@@ -166,7 +153,6 @@ class BPRModel(BaseRecommenderModel):
     
     def recommend_batch(self, user_ids: List[int], n_items: int = 10,
                        filter_already_liked_items: bool = True) -> Dict[int, List[Tuple[int, float]]]:
-        """Get recommendations for multiple users efficiently."""
         # Convert user IDs to indices
         user_indices = []
         valid_user_ids = []
@@ -185,7 +171,6 @@ class BPRModel(BaseRecommenderModel):
             filter_already_liked_items=filter_already_liked_items
         )
         
-        # Convert to dictionary format
         results = {}
         for i, user_id in enumerate(valid_user_ids):
             user_recs = []
@@ -193,7 +178,6 @@ class BPRModel(BaseRecommenderModel):
                 if j < len(recommendations[i]):
                     item_idx = recommendations[i][j]
                     item_id = self.idx_to_item[item_idx]
-                    # Calculate score
                     score = np.dot(
                         self.model.user_factors[user_indices[i]],
                         self.model.item_factors[item_idx]
@@ -204,16 +188,13 @@ class BPRModel(BaseRecommenderModel):
         return results
     
     def get_user_factors(self) -> np.ndarray:
-        """Get user latent factors."""
         return self.model.user_factors
     
     def get_item_factors(self) -> np.ndarray:
-        """Get item latent factors."""
         return self.model.item_factors
     
     def explain_recommendations(self, user_id: int, item_ids: List[int],
                               n_top_factors: int = 5) -> Dict[int, Dict[str, Any]]:
-        """Explain why items are recommended by showing top contributing factors."""
         if user_id not in self.user_to_idx:
             return {}
         

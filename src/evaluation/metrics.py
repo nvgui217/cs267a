@@ -1,4 +1,3 @@
-# src/evaluation/metrics.py
 import numpy as np
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from typing import List, Dict, Any, Tuple, Optional
@@ -7,57 +6,43 @@ import logging
 logger = logging.getLogger(__name__)
 
 class RecommenderMetrics:
-    """Comprehensive metrics for recommender system evaluation."""
-    
-    @staticmethod
-    def rmse(predictions: List[Tuple[float, float]]) -> float:
-        """Root Mean Squared Error."""
+    def rmse(self, predictions: List[Tuple[float, float]]) -> float:
         true_ratings = [true for true, pred in predictions]
         pred_ratings = [pred for true, pred in predictions]
         return np.sqrt(mean_squared_error(true_ratings, pred_ratings))
     
-    @staticmethod
-    def mae(predictions: List[Tuple[float, float]]) -> float:
-        """Mean Absolute Error."""
+    def mae(self, predictions: List[Tuple[float, float]]) -> float:
         true_ratings = [true for true, pred in predictions]
         pred_ratings = [pred for true, pred in predictions]
         return mean_absolute_error(true_ratings, pred_ratings)
     
-    @staticmethod
-    def mse(predictions: List[Tuple[float, float]]) -> float:
-        """Mean Squared Error."""
+    def mse(self, predictions: List[Tuple[float, float]]) -> float:
         true_ratings = [true for true, pred in predictions]
         pred_ratings = [pred for true, pred in predictions]
         return mean_squared_error(true_ratings, pred_ratings)
     
-    @staticmethod
-    def precision_at_k(recommended_items: List[List[int]], 
+    def precision_at_k(self, recommended_items: List[List[int]], 
                       relevant_items: List[List[int]], 
                       k: int) -> float:
-        """Calculate Precision@K."""
         precisions = []
         
         for rec_items, rel_items in zip(recommended_items, relevant_items):
-            # Take top-k recommendations
             rec_k = set(rec_items[:k])
             rel_set = set(rel_items)
             
-            # Calculate precision
             if len(rec_k) > 0:
                 precision = len(rec_k & rel_set) / len(rec_k)
                 precisions.append(precision)
         
         return np.mean(precisions) if precisions else 0.0
     
-    @staticmethod
-    def recall_at_k(recommended_items: List[List[int]], 
+    def recall_at_k(self, recommended_items: List[List[int]], 
                    relevant_items: List[List[int]], 
                    k: int) -> float:
         """Calculate Recall@K."""
         recalls = []
         
         for rec_items, rel_items in zip(recommended_items, relevant_items):
-            # Take top-k recommendations
             rec_k = set(rec_items[:k])
             rel_set = set(rel_items)
             
@@ -68,56 +53,48 @@ class RecommenderMetrics:
         
         return np.mean(recalls) if recalls else 0.0
     
-    @staticmethod
-    def f1_at_k(recommended_items: List[List[int]], 
+    def f1_at_k(self, recommended_items: List[List[int]], 
                 relevant_items: List[List[int]], 
                 k: int) -> float:
-        """Calculate F1@K."""
-        precision = RecommenderMetrics.precision_at_k(recommended_items, relevant_items, k)
-        recall = RecommenderMetrics.recall_at_k(recommended_items, relevant_items, k)
+        precision = self.precision_at_k(recommended_items, relevant_items, k)
+        recall = self.recall_at_k(recommended_items, relevant_items, k)
         
         if precision + recall == 0:
             return 0.0
         
         return 2 * (precision * recall) / (precision + recall)
     
-    @staticmethod
-    def ndcg_at_k(recommended_items: List[List[int]], 
+    def ndcg_at_k(self, recommended_items: List[List[int]], 
                   relevant_items: List[List[int]], 
                   k: int,
                   relevance_scores: Optional[List[Dict[int, float]]] = None) -> float:
-        """Calculate Normalized Discounted Cumulative Gain @K."""
         ndcgs = []
         
         for i, (rec_items, rel_items) in enumerate(zip(recommended_items, relevant_items)):
-            # Get relevance scores if provided, otherwise binary
             if relevance_scores and i < len(relevance_scores):
                 rel_scores = relevance_scores[i]
             else:
                 rel_scores = {item: 1.0 for item in rel_items}
             
-            # Calculate DCG
+            # DCG
             dcg = 0.0
             for j, item in enumerate(rec_items[:k]):
                 if item in rel_scores:
                     # Position starts at 1, not 0
                     dcg += rel_scores[item] / np.log2(j + 2)
             
-            # Calculate IDCG (ideal DCG)
             ideal_scores = sorted(rel_scores.values(), reverse=True)[:k]
             idcg = sum(score / np.log2(j + 2) for j, score in enumerate(ideal_scores))
             
-            # Calculate NDCG
+            # NDCG
             if idcg > 0:
                 ndcgs.append(dcg / idcg)
         
         return np.mean(ndcgs) if ndcgs else 0.0
     
-    @staticmethod
-    def map_at_k(recommended_items: List[List[int]], 
+    def map_at_k(self, recommended_items: List[List[int]], 
                  relevant_items: List[List[int]], 
                  k: int) -> float:
-        """Calculate Mean Average Precision @K."""
         aps = []
         
         for rec_items, rel_items in zip(recommended_items, relevant_items):
@@ -126,7 +103,6 @@ class RecommenderMetrics:
             if not rel_set:
                 continue
             
-            # Calculate average precision
             hits = 0
             sum_precision = 0.0
             
@@ -141,11 +117,9 @@ class RecommenderMetrics:
         
         return np.mean(aps) if aps else 0.0
     
-    @staticmethod
-    def mrr_at_k(recommended_items: List[List[int]], 
+    def mrr_at_k(self, recommended_items: List[List[int]], 
                  relevant_items: List[List[int]], 
                  k: int) -> float:
-        """Calculate Mean Reciprocal Rank @K."""
         rrs = []
         
         for rec_items, rel_items in zip(recommended_items, relevant_items):
@@ -160,11 +134,9 @@ class RecommenderMetrics:
         
         return np.mean(rrs) if rrs else 0.0
     
-    @staticmethod
-    def coverage(recommended_items: List[List[int]], 
+    def coverage(self, recommended_items: List[List[int]], 
                  all_items: set,
                  k: Optional[int] = None) -> float:
-        """Calculate catalog coverage."""
         recommended_unique = set()
         for rec_items in recommended_items:
             if k:
@@ -174,11 +146,9 @@ class RecommenderMetrics:
         
         return len(recommended_unique) / len(all_items) if all_items else 0.0
     
-    @staticmethod
-    def diversity(recommended_items: List[List[int]], 
+    def diversity(self, recommended_items: List[List[int]], 
                   item_features: np.ndarray,
                   k: Optional[int] = None) -> float:
-        """Calculate average intra-list diversity using item features."""
         diversities = []
         
         for rec_items in recommended_items:
@@ -196,7 +166,6 @@ class RecommenderMetrics:
                         feat_i = item_features[rec_items[i]]
                         feat_j = item_features[rec_items[j]]
                         
-                        # Cosine distance
                         cos_sim = np.dot(feat_i, feat_j) / (
                             np.linalg.norm(feat_i) * np.linalg.norm(feat_j) + 1e-8
                         )
@@ -207,11 +176,9 @@ class RecommenderMetrics:
         
         return np.mean(diversities) if diversities else 0.0
     
-    @staticmethod
-    def novelty(recommended_items: List[List[int]], 
+    def novelty(self, recommended_items: List[List[int]], 
                 item_popularity: Dict[int, float],
                 k: Optional[int] = None) -> float:
-        """Calculate average novelty (unpopularity) of recommendations."""
         novelties = []
         
         for rec_items in recommended_items:
@@ -221,7 +188,6 @@ class RecommenderMetrics:
             item_novelties = []
             for item in rec_items:
                 if item in item_popularity:
-                    # Novelty is inverse of popularity
                     novelty = -np.log2(item_popularity[item] + 1e-10)
                     item_novelties.append(novelty)
             
@@ -230,12 +196,10 @@ class RecommenderMetrics:
         
         return np.mean(novelties) if novelties else 0.0
     
-    @staticmethod
-    def serendipity(recommended_items: List[List[int]], 
+    def serendipity(self, recommended_items: List[List[int]], 
                     relevant_items: List[List[int]],
                     expected_items: List[List[int]],
                     k: int) -> float:
-        """Calculate serendipity - relevant items that are unexpected."""
         serendipities = []
         
         for rec_items, rel_items, exp_items in zip(recommended_items, relevant_items, expected_items):
@@ -243,7 +207,6 @@ class RecommenderMetrics:
             rel_set = set(rel_items)
             exp_set = set(exp_items[:k])
             
-            # Serendipitous items are relevant but not expected
             serendipitous = (rec_k & rel_set) - exp_set
             
             if len(rec_k) > 0:

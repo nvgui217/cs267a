@@ -1,4 +1,3 @@
-# main.py
 import logging
 import yaml
 from pathlib import Path
@@ -9,14 +8,11 @@ import numpy as np
 from typing import Dict, Any
 import pandas as pd 
 
-# Import all modules
 from src.data.data_loader import MovieLensDataLoader
 from src.models import PMFModel, BPRModel, LightFMModel
 from src.evaluation.evaluator import ModelEvaluator
-from src.visualization.plots import RecommenderVisualizer
 from src.optimization.hyperparameter_tuning import HyperparameterTuner
 
-# Setup logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -27,53 +23,31 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def print_separator(title: str = "", char: str = "=", length: int = 80):
-    """Print a formatted separator line."""
-    if title:
-        padding = (length - len(title) - 2) // 2
-        logger.info(f"\n{char * padding} {title} {char * padding}")
-    else:
-        logger.info(char * length)
-
 def main():
-    """Main execution function with all features."""
     start_time = time.time()
     
-    print_separator("CS 267A - MovieLens Recommender System Implementation")
-    logger.info("Baseline: PMF with scikit-surprise")
-    logger.info("Medium Goal: BPR-MF with implicit library")
-    logger.info("Advanced Features: Hyperparameter Tuning, Cross-validation, Ensemble, LightFM")
-    print_separator()
-    
-    # Load configuration
     with open('config/config.yaml', 'r') as f:
         config = yaml.safe_load(f)
     
-    # Create results directory structure
     results_dir = Path(config['output']['results_dir'])
     for subdir in ['models', 'metrics', 'plots', 'predictions', 'optimization']:
         (results_dir / subdir).mkdir(parents=True, exist_ok=True)
     
-    # Initialize components
     data_loader = MovieLensDataLoader(config)
     evaluator = ModelEvaluator(config)
-    visualizer = RecommenderVisualizer(str(results_dir / 'plots'))
     
-    # Step 1: Load and prepare data
-    print_separator("STEP 1: Data Loading and Preparation")
+    # Load and prepare data
+    print("Data Loading and Preparation")
     data = data_loader.prepare_data_splits()
     movies_df = data['movies_df']
     
-    # Step 2: Hyperparameter Tuning (if enabled)
     if config['optimization']['run_optimization']:
-        print_separator("STEP 2: Hyperparameter Optimization")
+        print("Hyperparameter Optimization")
         tuner = HyperparameterTuner(config)
         
-        # Create a single validation set to be used for all model tuning
         train_split, val_split = data_loader.create_validation_split(data['train_df'])
         
-        # --- Tune PMF ---
-        logger.info("\n--- Tuning PMF Hyperparameters ---")
+        logger.info("\n Tuning PMF Hyperparameters")
         from surprise import Dataset, Reader
         reader = Reader(rating_scale=(1, 5))
         pmf_train_data = Dataset.load_from_df(train_split[['user_id', 'item_id', 'rating']], reader).build_full_trainset()
@@ -81,84 +55,71 @@ def main():
         
         best_pmf_params = tuner.tune_pmf(pmf_train_data, pmf_val_data)
         
-        ### FIX: Update the main config with the best PMF parameters found
-        logger.info(f"Updating PMF config with best params: {best_pmf_params}")
+        logger.info(f"PMF config best params: {best_pmf_params}")
         config['models']['pmf'].update(best_pmf_params)
 
-        # --- Tune BPR ---
-        logger.info("\n--- Tuning BPR Hyperparameters ---")
+        logger.info("\n Tuning BPR Hyperparameters ")
         bpr_val_data = data_loader._prepare_implicit_data(
             data['ratings_df'], train_split, val_split, 
             threshold=config['data']['min_rating_threshold']
         )
         best_bpr_params = tuner.tune_bpr(bpr_val_data, bpr_val_data)
         
-        ### FIX: Update the main config with the best BPR parameters found
-        logger.info(f"Updating BPR config with best params: {best_bpr_params}")
+        logger.info(f"BPR config best params: {best_bpr_params}")
         config['models']['bpr'].update(best_bpr_params)
         
-        # Note: Tuning for LightFM could be added here as well following the same pattern.
-        
     else:
-        print_separator("STEP 2: Using Default Parameters from config.yaml")
+        pass
 
-    # Step 3: Train final models
-    print_separator("STEP 3: Training Final Models")
+    #Train final models
+    print("Training Final Models")
     
-    # Train PMF with the best (or default) parameters
-    logger.info("\n--- Training PMF Model ---")
     logger.info(f"Final PMF Configuration: {config['models']['pmf']}")
     pmf_model = PMFModel(config)
     pmf_model.fit(data['explicit']['trainset'])
     pmf_size = pmf_model.get_model_size()
     
-    # Train BPR with the best (or default) parameters
-    logger.info("\n--- Training BPR-MF Model ---")
     logger.info(f"Final BPR Configuration: {config['models']['bpr']}")
     bpr_model = BPRModel(config)
     bpr_model.fit(data['implicit'])
     bpr_size = bpr_model.get_model_size()
 
-    # Train LightFM if enabled
     lightfm_model = None
     if config.get('optimization', {}).get('run_lightfm', False):
-        logger.info("\n--- Training LightFM Model ---")
         logger.info(f"Final LightFM Configuration: {config['models']['lightfm']}")
         lightfm_model = LightFMModel(config)
         lightfm_model.fit(data['implicit'])
         lightfm_size = lightfm_model.get_model_size()
     
-    # Step 4: Evaluate final models
-    print_separator("STEP 4: Evaluating Final Models")
+    # Evaluate final models
     all_metrics = {'experiment_info': {'config': config}}
     
-    logger.info("\n--- Evaluating PMF Model ---")
+    logger.info("\n Evaluating PMF Model")
     pmf_results = evaluator.evaluate_pmf(pmf_model, data['explicit']['testset'])
     all_metrics['pmf_results'] = {**pmf_results, 'model_info': pmf_model.model_info, 'model_size': pmf_size}
     
-    logger.info("\n--- Evaluating BPR-MF Model ---")
+    logger.info("\n Evaluating BPR-MF Model")
     bpr_results = evaluator.evaluate_bpr(bpr_model, data['implicit']['test_matrix'], data['implicit']['train_matrix'])
     all_metrics['bpr_results'] = {**bpr_results, 'model_info': bpr_model.model_info, 'model_size': bpr_size}
 
     if lightfm_model:
-        logger.info("\n--- Evaluating LightFM Model ---")
+        logger.info("\n Evaluating LightFM Model")
         lightfm_results = evaluator.evaluate_bpr(lightfm_model, data['implicit']['test_matrix'], data['implicit']['train_matrix'])
         all_metrics['lightfm_results'] = {**lightfm_results, 'model_info': lightfm_model.model_info, 'model_size': lightfm_size}
 
-    # Step 5: Generate and save final results
-    print_separator("STEP 5: Saving Results")
-    # ... (Code for visualizations, reports, etc.) ...
-    
-    # Final Summary
     elapsed_time = time.time() - start_time
-    print_separator("EXECUTION COMPLETE")
-    logger.info(f"Total execution time: {elapsed_time/60:.2f} minutes")
+    all_metrics['experiment_info']['timestamp'] = datetime.now().isoformat()
+    all_metrics['experiment_info']['total_execution_time'] = elapsed_time
+
+    metrics_path = results_dir / 'metrics' / 'evaluation_metrics.json'
+    with open(metrics_path, 'w') as f:
+        json.dump(all_metrics, f, indent=2)
+
+    print("COMPLETE")
     logger.info(f"Final PMF RMSE: {pmf_results.get('rmse', 'N/A'):.4f}")
     logger.info(f"Final BPR Precision@10: {bpr_results.get('precision@10', 'N/A'):.4f}")
     if lightfm_model:
         logger.info(f"Final LightFM Precision@10: {all_metrics.get('lightfm_results', {}).get('precision@10', 'N/A'):.4f}")
-    logger.info(f"Results saved to: {results_dir}")
-    print_separator()
 
 if __name__ == "__main__":
     main()

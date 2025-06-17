@@ -1,4 +1,3 @@
-# src/models/lightfm_model.py
 from lightfm import LightFM
 import numpy as np
 import scipy.sparse as sp
@@ -10,7 +9,6 @@ from .base_model import BaseRecommenderModel
 logger = logging.getLogger(__name__)
 
 class LightFMModel(BaseRecommenderModel):
-    """LightFM model for hybrid recommendations."""
     
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
@@ -28,20 +26,18 @@ class LightFMModel(BaseRecommenderModel):
         self.user_to_idx = None
         self.item_to_idx = None
         self.idx_to_item = None
-        self.idx_to_user = None  # <-- Initialize attribute
+        self.idx_to_user = None
         self.item_features = None
         self.user_item_matrix = None
 
     def fit(self, train_data: Dict[str, Any]):
-        """Train LightFM model."""
         logger.info("Training LightFM model...")
         logger.info(f"Configuration: {self.config}")
         
-        # Store mappings and matrices needed for prediction/recommendation
         self.user_to_idx = train_data['user_to_idx']
         self.item_to_idx = train_data['item_to_idx']
         self.idx_to_item = train_data['idx_to_item']
-        self.idx_to_user = train_data['idx_to_user'] # <-- ADDED THIS LINE
+        self.idx_to_user = train_data['idx_to_user']
         self.item_features = train_data['item_features']
         self.user_item_matrix = train_data['train_matrix']
         
@@ -65,7 +61,6 @@ class LightFMModel(BaseRecommenderModel):
         logger.info(f"LightFM training completed in {self.training_time:.2f} seconds")
 
     def predict(self, user_id: int, item_id: int) -> float:
-        """Predict preference score."""
         user_idx = self.user_to_idx.get(user_id)
         item_idx = self.item_to_idx.get(item_id)
         
@@ -81,7 +76,6 @@ class LightFMModel(BaseRecommenderModel):
         return float(scores[0])
 
     def recommend(self, user_id: int, n_items: int = 10) -> List[Tuple[int, float]]:
-        """Get top-N recommendations."""
         user_idx = self.user_to_idx.get(user_id)
         if user_idx is None:
             return []
@@ -108,11 +102,9 @@ class LightFMModel(BaseRecommenderModel):
         return recommendations
     
     def get_user_factors(self) -> np.ndarray:
-        """Get user latent factors."""
-        biases, factors = self.model.get_user_representations()
+        bias, factors = self.model.get_user_representations()
         return factors
 
     def get_item_factors(self) -> np.ndarray:
-        """Get item latent factors."""
-        biases, factors = self.model.get_item_representations(features=self.item_features)
+        bias, factors = self.model.get_item_representations(features=self.item_features)
         return factors
