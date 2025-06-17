@@ -14,8 +14,8 @@ pip install -r requirements.txt
 ```bash
 mkdir -p data/raw
 cd data/raw
-wget http://files.grouplens.org/datasets/movielens/ml-100k.zip
-unzip ml-100k.zip
+wget http://files.grouplens.org/datasets/movielens/ml-1m.zip
+unzip ml-1m.zip
 cd ../..
 ```
 

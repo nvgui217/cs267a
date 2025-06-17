@@ -1955,3 +1955,263 @@ Recommendations for User 500:
 2025-06-16 20:21:20,814 - __main__ - INFO - BPR Precision@10: 0.0286
 2025-06-16 20:21:20,814 - __main__ - INFO - Results saved to: results
 2025-06-16 20:21:20,814 - __main__ - INFO - ================================================================================
+2025-06-16 20:43:34,789 - __main__ - INFO - 
+============ CS 267A - MovieLens Recommender System Implementation ============
+2025-06-16 20:43:34,789 - __main__ - INFO - Baseline: PMF with scikit-surprise
+2025-06-16 20:43:34,789 - __main__ - INFO - Medium Goal: BPR-MF with implicit library
+2025-06-16 20:43:34,789 - __main__ - INFO - Advanced Features: Hyperparameter Tuning, Cross-validation, Ensemble, LightFM
+2025-06-16 20:43:34,789 - __main__ - INFO - ================================================================================
+2025-06-16 20:45:53,271 - __main__ - INFO - 
+============ CS 267A - MovieLens Recommender System Implementation ============
+2025-06-16 20:45:53,271 - __main__ - INFO - Baseline: PMF with scikit-surprise
+2025-06-16 20:45:53,271 - __main__ - INFO - Medium Goal: BPR-MF with implicit library
+2025-06-16 20:45:53,271 - __main__ - INFO - Advanced Features: Hyperparameter Tuning, Cross-validation, Ensemble, LightFM
+2025-06-16 20:45:53,271 - __main__ - INFO - ================================================================================
+2025-06-16 20:45:53,277 - __main__ - INFO - 
+===================== STEP 1: Data Loading and Preparation =====================
+2025-06-16 20:45:53,277 - src.data.data_loader - INFO - Loading MovieLens-100K ratings from data/raw/ml-100k...
+2025-06-16 20:45:53,299 - src.data.data_loader - INFO - Loaded 100,000 ratings from 943 users and 1,682 items
+2025-06-16 20:45:53,299 - src.data.data_loader - INFO - Loading movie metadata with genres...
+2025-06-16 20:45:53,310 - src.data.data_loader - INFO - Loaded metadata for 1,682 movies
+2025-06-16 20:45:53,314 - src.data.data_loader - INFO - Train size: 80,000, Test size: 20,000
+2025-06-16 20:45:53,365 - src.data.data_loader - INFO - Converting to implicit feedback (threshold >= 3.0)...
+2025-06-16 20:45:53,384 - src.data.data_loader - INFO - Implicit matrices created - Shape: (943, 1682), Train interactions: 65,988, Test interactions: 16,532
+2025-06-16 20:45:53,384 - src.data.data_loader - INFO - Creating item feature matrix from genres...
+2025-06-16 20:45:53,386 - src.data.data_loader - INFO - Item feature matrix created with shape (1682, 19)
+2025-06-16 20:45:53,388 - __main__ - INFO - 
+Dataset Statistics:
+2025-06-16 20:45:53,388 - __main__ - INFO - Total ratings: 100,000
+2025-06-16 20:45:53,388 - __main__ - INFO - Train ratings: 80,000
+2025-06-16 20:45:53,388 - __main__ - INFO - Test ratings: 20,000
+2025-06-16 20:45:53,388 - __main__ - INFO - 
+===================== STEP 2: Hyperparameter Optimization =====================
+2025-06-16 20:45:53,392 - src.data.data_loader - INFO - Created validation split - Train: 72000, Val: 8000
+2025-06-16 20:45:53,392 - __main__ - INFO - 
+=========================== STEP 3: Training Models ===========================
+2025-06-16 20:45:53,392 - __main__ - INFO - 
+--- Training PMF Model ---
+2025-06-16 20:45:53,392 - src.models.pmf_model - INFO - Training PMF model...
+2025-06-16 20:45:53,392 - src.models.pmf_model - INFO - Configuration: {'algorithm': 'svd', 'n_factors': 50, 'n_epochs': 20, 'learning_rate': 0.005, 'regularization': 0.02, 'biased': False, 'reg_pu': None, 'reg_qi': None, 'random_state': 42, 'verbose': True}
+2025-06-16 20:45:53,701 - src.models.pmf_model - INFO - PMF training completed in 0.31 seconds
+2025-06-16 20:45:53,701 - src.models.pmf_model - INFO - Model size: Users (943, 50), Items (1653, 50)
+2025-06-16 20:45:53,701 - __main__ - INFO - PMF model size: {'n_users': 943, 'n_items': 1653, 'n_factors': 50, 'total_parameters': 129800}
+2025-06-16 20:45:53,701 - __main__ - INFO - 
+--- Training BPR-MF Model ---
+2025-06-16 20:45:53,701 - src.models.bpr_model - INFO - Training BPR model...
+2025-06-16 20:45:53,702 - src.models.bpr_model - INFO - Configuration: {'algorithm': 'bpr', 'factors': 100, 'iterations': 400, 'learning_rate': 0.05, 'regularization': 0.0005, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42, 'verify_negative_samples': False}
+2025-06-16 20:45:55,092 - src.models.bpr_model - INFO - Training completed in 1.39 seconds
+2025-06-16 20:45:55,092 - src.models.bpr_model - INFO - Model size: Users (943, 101), Items (1682, 101)
+2025-06-16 20:45:55,092 - __main__ - INFO - BPR model size: {'n_users': 943, 'n_items': 1682, 'n_factors': 101, 'total_parameters': 265125}
+2025-06-16 20:45:55,093 - __main__ - INFO - 
+--- Training LightFM Model ---
+2025-06-16 20:45:55,093 - src.models.lightfm_model - INFO - Training LightFM model...
+2025-06-16 20:45:55,093 - src.models.lightfm_model - INFO - Configuration: {'no_components': 100, 'learning_rate': 0.05, 'loss': 'warp', 'max_sampled': 10, 'item_alpha': 1e-06, 'user_alpha': 1e-06, 'random_state': 42, 'epochs': 100}
+2025-06-16 20:48:03,336 - __main__ - INFO - 
+============ CS 267A - MovieLens Recommender System Implementation ============
+2025-06-16 20:48:03,336 - __main__ - INFO - Baseline: PMF with scikit-surprise
+2025-06-16 20:48:03,336 - __main__ - INFO - Medium Goal: BPR-MF with implicit library
+2025-06-16 20:48:03,336 - __main__ - INFO - Advanced Features: Hyperparameter Tuning, Cross-validation, Ensemble, LightFM
+2025-06-16 20:48:03,336 - __main__ - INFO - ================================================================================
+2025-06-16 20:48:03,340 - __main__ - INFO - 
+===================== STEP 1: Data Loading and Preparation =====================
+2025-06-16 20:48:03,340 - src.data.data_loader - INFO - Loading MovieLens-100K ratings from data/raw/ml-100k...
+2025-06-16 20:48:03,363 - src.data.data_loader - INFO - Loaded 100,000 ratings from 943 users and 1,682 items
+2025-06-16 20:48:03,363 - src.data.data_loader - INFO - Loading movie metadata with genres...
+2025-06-16 20:48:03,374 - src.data.data_loader - INFO - Loaded metadata for 1,682 movies
+2025-06-16 20:48:03,377 - src.data.data_loader - INFO - Train size: 80,000, Test size: 20,000
+2025-06-16 20:48:03,434 - src.data.data_loader - INFO - Converting to implicit feedback (threshold >= 3.0)...
+2025-06-16 20:48:03,452 - src.data.data_loader - INFO - Implicit matrices created - Shape: (943, 1682), Train interactions: 65,988, Test interactions: 16,532
+2025-06-16 20:48:03,452 - src.data.data_loader - INFO - Creating item feature matrix from genres...
+2025-06-16 20:48:03,454 - src.data.data_loader - INFO - Item feature matrix created with shape (1682, 19)
+2025-06-16 20:48:03,455 - __main__ - INFO - 
+Dataset Statistics:
+2025-06-16 20:48:03,455 - __main__ - INFO - Total ratings: 100,000
+2025-06-16 20:48:03,455 - __main__ - INFO - Train ratings: 80,000
+2025-06-16 20:48:03,455 - __main__ - INFO - Test ratings: 20,000
+2025-06-16 20:48:03,455 - __main__ - INFO - 
+===================== STEP 2: Hyperparameter Optimization =====================
+2025-06-16 20:48:03,457 - src.data.data_loader - INFO - Created validation split - Train: 72000, Val: 8000
+2025-06-16 20:48:03,458 - __main__ - INFO - 
+=========================== STEP 3: Training Models ===========================
+2025-06-16 20:48:03,458 - __main__ - INFO - 
+--- Training PMF Model ---
+2025-06-16 20:48:03,458 - src.models.pmf_model - INFO - Training PMF model...
+2025-06-16 20:48:03,458 - src.models.pmf_model - INFO - Configuration: {'algorithm': 'svd', 'n_factors': 50, 'n_epochs': 20, 'learning_rate': 0.005, 'regularization': 0.02, 'biased': False, 'reg_pu': None, 'reg_qi': None, 'random_state': 42, 'verbose': True}
+2025-06-16 20:48:03,772 - src.models.pmf_model - INFO - PMF training completed in 0.31 seconds
+2025-06-16 20:48:03,772 - src.models.pmf_model - INFO - Model size: Users (943, 50), Items (1653, 50)
+2025-06-16 20:48:03,772 - __main__ - INFO - PMF model size: {'n_users': 943, 'n_items': 1653, 'n_factors': 50, 'total_parameters': 129800}
+2025-06-16 20:48:03,772 - __main__ - INFO - 
+--- Training BPR-MF Model ---
+2025-06-16 20:48:03,772 - src.models.bpr_model - INFO - Training BPR model...
+2025-06-16 20:48:03,772 - src.models.bpr_model - INFO - Configuration: {'algorithm': 'bpr', 'factors': 100, 'iterations': 400, 'learning_rate': 0.05, 'regularization': 0.0005, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42, 'verify_negative_samples': False}
+2025-06-16 20:48:05,003 - src.models.bpr_model - INFO - Training completed in 1.23 seconds
+2025-06-16 20:48:05,003 - src.models.bpr_model - INFO - Model size: Users (943, 101), Items (1682, 101)
+2025-06-16 20:48:05,003 - __main__ - INFO - BPR model size: {'n_users': 943, 'n_items': 1682, 'n_factors': 101, 'total_parameters': 265125}
+2025-06-16 20:48:05,003 - __main__ - INFO - 
+--- Training LightFM Model ---
+2025-06-16 20:48:05,003 - src.models.lightfm_model - INFO - Training LightFM model...
+2025-06-16 20:48:05,003 - src.models.lightfm_model - INFO - Configuration: {'no_components': 100, 'learning_rate': 0.05, 'loss': 'warp', 'max_sampled': 10, 'item_alpha': 1e-06, 'user_alpha': 1e-06, 'epochs': 100, 'num_threads': 4, 'random_state': 42}
+2025-06-16 20:48:18,443 - src.models.lightfm_model - INFO - LightFM training completed in 13.44 seconds
+2025-06-16 20:48:18,443 - __main__ - INFO - LightFM model size: {'n_users': 943, 'n_items': 1682, 'n_factors': 100, 'total_parameters': 262500}
+2025-06-16 20:48:18,444 - __main__ - INFO - 
+=========================== STEP 5: Model Evaluation ===========================
+2025-06-16 20:48:18,444 - __main__ - INFO - 
+--- Evaluating PMF Model ---
+2025-06-16 20:48:18,444 - src.evaluation.evaluator - INFO - Evaluating PMF model...
+2025-06-16 20:48:18,485 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9434, MAE: 0.7410
+2025-06-16 20:48:18,485 - __main__ - INFO - 
+--- Evaluating BPR-MF Model ---
+2025-06-16 20:48:18,485 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
+2025-06-16 20:48:18,485 - src.evaluation.evaluator - INFO - Generating recommendations for 936 test users...
+2025-06-16 20:48:18,538 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0171, R@10: 0.0125, NDCG@10: 0.0183, Coverage: 0.6302
+2025-06-16 20:48:18,538 - __main__ - INFO - 
+--- Evaluating LightFM Model ---
+2025-06-16 20:48:18,538 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
+2025-06-16 20:48:18,538 - src.evaluation.evaluator - INFO - Generating recommendations for 936 test users...
+2025-06-16 20:49:02,086 - __main__ - INFO - 
+============ CS 267A - MovieLens Recommender System Implementation ============
+2025-06-16 20:49:02,086 - __main__ - INFO - Baseline: PMF with scikit-surprise
+2025-06-16 20:49:02,087 - __main__ - INFO - Medium Goal: BPR-MF with implicit library
+2025-06-16 20:49:02,087 - __main__ - INFO - Advanced Features: Hyperparameter Tuning, Cross-validation, Ensemble, LightFM
+2025-06-16 20:49:02,087 - __main__ - INFO - ================================================================================
+2025-06-16 20:49:02,090 - __main__ - INFO - 
+===================== STEP 1: Data Loading and Preparation =====================
+2025-06-16 20:49:02,090 - src.data.data_loader - INFO - Loading MovieLens-100K ratings from data/raw/ml-100k...
+2025-06-16 20:49:02,109 - src.data.data_loader - INFO - Loaded 100,000 ratings from 943 users and 1,682 items
+2025-06-16 20:49:02,109 - src.data.data_loader - INFO - Loading movie metadata with genres...
+2025-06-16 20:49:02,118 - src.data.data_loader - INFO - Loaded metadata for 1,682 movies
+2025-06-16 20:49:02,122 - src.data.data_loader - INFO - Train size: 80,000, Test size: 20,000
+2025-06-16 20:49:02,172 - src.data.data_loader - INFO - Converting to implicit feedback (threshold >= 3.0)...
+2025-06-16 20:49:02,185 - src.data.data_loader - INFO - Implicit matrices created - Shape: (943, 1682), Train interactions: 65,988, Test interactions: 16,532
+2025-06-16 20:49:02,185 - src.data.data_loader - INFO - Creating item feature matrix from genres...
+2025-06-16 20:49:02,187 - src.data.data_loader - INFO - Item feature matrix created with shape (1682, 19)
+2025-06-16 20:49:02,188 - __main__ - INFO - 
+Dataset Statistics:
+2025-06-16 20:49:02,188 - __main__ - INFO - Total ratings: 100,000
+2025-06-16 20:49:02,188 - __main__ - INFO - Train ratings: 80,000
+2025-06-16 20:49:02,188 - __main__ - INFO - Test ratings: 20,000
+2025-06-16 20:49:02,188 - __main__ - INFO - 
+===================== STEP 2: Hyperparameter Optimization =====================
+2025-06-16 20:49:02,190 - src.data.data_loader - INFO - Created validation split - Train: 72000, Val: 8000
+2025-06-16 20:49:02,190 - __main__ - INFO - 
+=========================== STEP 3: Training Models ===========================
+2025-06-16 20:49:02,190 - __main__ - INFO - 
+--- Training PMF Model ---
+2025-06-16 20:49:02,190 - src.models.pmf_model - INFO - Training PMF model...
+2025-06-16 20:49:02,190 - src.models.pmf_model - INFO - Configuration: {'algorithm': 'svd', 'n_factors': 50, 'n_epochs': 20, 'learning_rate': 0.005, 'regularization': 0.02, 'biased': False, 'reg_pu': None, 'reg_qi': None, 'random_state': 42, 'verbose': True}
+2025-06-16 20:49:02,469 - src.models.pmf_model - INFO - PMF training completed in 0.28 seconds
+2025-06-16 20:49:02,469 - src.models.pmf_model - INFO - Model size: Users (943, 50), Items (1653, 50)
+2025-06-16 20:49:02,469 - __main__ - INFO - PMF model size: {'n_users': 943, 'n_items': 1653, 'n_factors': 50, 'total_parameters': 129800}
+2025-06-16 20:49:02,469 - __main__ - INFO - 
+--- Training BPR-MF Model ---
+2025-06-16 20:49:02,469 - src.models.bpr_model - INFO - Training BPR model...
+2025-06-16 20:49:02,469 - src.models.bpr_model - INFO - Configuration: {'algorithm': 'bpr', 'factors': 100, 'iterations': 400, 'learning_rate': 0.05, 'regularization': 0.0005, 'num_threads': 0, 'dtype': 'float32', 'random_state': 42, 'verify_negative_samples': False}
+2025-06-16 20:49:04,134 - src.models.bpr_model - INFO - Training completed in 1.67 seconds
+2025-06-16 20:49:04,135 - src.models.bpr_model - INFO - Model size: Users (943, 101), Items (1682, 101)
+2025-06-16 20:49:04,135 - __main__ - INFO - BPR model size: {'n_users': 943, 'n_items': 1682, 'n_factors': 101, 'total_parameters': 265125}
+2025-06-16 20:49:04,135 - __main__ - INFO - 
+--- Training LightFM Model ---
+2025-06-16 20:49:04,135 - src.models.lightfm_model - INFO - Training LightFM model...
+2025-06-16 20:49:04,135 - src.models.lightfm_model - INFO - Configuration: {'no_components': 100, 'learning_rate': 0.05, 'loss': 'warp', 'max_sampled': 10, 'item_alpha': 1e-06, 'user_alpha': 1e-06, 'epochs': 100, 'num_threads': 4, 'random_state': 42}
+2025-06-16 20:49:17,723 - src.models.lightfm_model - INFO - LightFM training completed in 13.59 seconds
+2025-06-16 20:49:17,723 - __main__ - INFO - LightFM model size: {'n_users': 943, 'n_items': 1682, 'n_factors': 100, 'total_parameters': 262500}
+2025-06-16 20:49:17,723 - __main__ - INFO - 
+=========================== STEP 5: Model Evaluation ===========================
+2025-06-16 20:49:17,723 - __main__ - INFO - 
+--- Evaluating PMF Model ---
+2025-06-16 20:49:17,723 - src.evaluation.evaluator - INFO - Evaluating PMF model...
+2025-06-16 20:49:17,763 - src.evaluation.evaluator - INFO - PMF Results - RMSE: 0.9434, MAE: 0.7410
+2025-06-16 20:49:17,764 - __main__ - INFO - 
+--- Evaluating BPR-MF Model ---
+2025-06-16 20:49:17,764 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
+2025-06-16 20:49:17,764 - src.evaluation.evaluator - INFO - Generating recommendations for 936 test users...
+2025-06-16 20:49:18,806 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0167, R@10: 0.0112, NDCG@10: 0.0178, Coverage: 0.6171
+2025-06-16 20:49:18,806 - __main__ - INFO - 
+--- Evaluating LightFM Model ---
+2025-06-16 20:49:18,806 - src.evaluation.evaluator - INFO - Evaluating BPR-MF model...
+2025-06-16 20:49:18,807 - src.evaluation.evaluator - INFO - Generating recommendations for 936 test users...
+2025-06-16 20:49:19,952 - src.evaluation.evaluator - INFO - BPR Results - P@10: 0.0222, R@10: 0.0122, NDCG@10: 0.0252, Coverage: 0.4096
+2025-06-16 20:49:19,952 - __main__ - INFO - 
+================== STEP 6: Generating Example Recommendations ==================
+2025-06-16 20:49:19,952 - __main__ - INFO - 
+Recommendations for User 877:
+2025-06-16 20:49:19,955 - __main__ - INFO - PMF recommendations:
+2025-06-16 20:49:19,956 - __main__ - INFO -   - Close Shave, A (1995) (Score: 4.803)
+2025-06-16 20:49:19,956 - __main__ - INFO -   - Pulp Fiction (1994) (Score: 4.700)
+2025-06-16 20:49:19,956 - __main__ - INFO -   - Shawshank Redemption, The (1994) (Score: 4.687)
+2025-06-16 20:49:19,956 - __main__ - INFO -   - Casablanca (1942) (Score: 4.620)
+2025-06-16 20:49:19,957 - __main__ - INFO -   - Godfather: Part II, The (1974) (Score: 4.618)
+2025-06-16 20:49:19,957 - __main__ - INFO - BPR recommendations:
+2025-06-16 20:49:19,957 - __main__ - INFO -   - Emma (1996) (Score: 7.864)
+2025-06-16 20:49:19,957 - __main__ - INFO -   - She's So Lovely (1997) (Score: 7.800)
+2025-06-16 20:49:19,957 - __main__ - INFO -   - Alien: Resurrection (1997) (Score: 6.317)
+2025-06-16 20:49:19,958 - __main__ - INFO -   - With Honors (1994) (Score: 6.137)
+2025-06-16 20:49:19,958 - __main__ - INFO -   - Citizen Ruth (1996) (Score: 5.947)
+2025-06-16 20:49:19,958 - __main__ - INFO - LightFM recommendations:
+2025-06-16 20:49:19,958 - __main__ - INFO -   - Empire Strikes Back, The (1980) (Score: -1.676)
+2025-06-16 20:49:19,959 - __main__ - INFO -   - Legends of the Fall (1994) (Score: -2.104)
+2025-06-16 20:49:19,959 - __main__ - INFO -   - Diva (1981) (Score: -2.472)
+2025-06-16 20:49:19,959 - __main__ - INFO -   - Star Wars (1977) (Score: -2.596)
+2025-06-16 20:49:19,959 - __main__ - INFO -   - Return of the Jedi (1983) (Score: -2.596)
+2025-06-16 20:49:19,959 - __main__ - INFO - 
+Recommendations for User 815:
+2025-06-16 20:49:19,962 - __main__ - INFO - PMF recommendations:
+2025-06-16 20:49:19,962 - __main__ - INFO -   - Shawshank Redemption, The (1994) (Score: 4.289)
+2025-06-16 20:49:19,962 - __main__ - INFO -   - Some Folks Call It a Sling Blade (1993) (Score: 4.257)
+2025-06-16 20:49:19,963 - __main__ - INFO -   - Rear Window (1954) (Score: 4.223)
+2025-06-16 20:49:19,963 - __main__ - INFO -   - Great Escape, The (1963) (Score: 4.198)
+2025-06-16 20:49:19,963 - __main__ - INFO -   - Miracle on 34th Street (1994) (Score: 4.197)
+2025-06-16 20:49:19,963 - __main__ - INFO - BPR recommendations:
+2025-06-16 20:49:19,963 - __main__ - INFO -   - Doors, The (1991) (Score: 4.718)
+2025-06-16 20:49:19,963 - __main__ - INFO -   - Christmas Carol, A (1938) (Score: 4.276)
+2025-06-16 20:49:19,964 - __main__ - INFO -   - Casablanca (1942) (Score: 4.036)
+2025-06-16 20:49:19,964 - __main__ - INFO -   - Breakfast at Tiffany's (1961) (Score: 4.036)
+2025-06-16 20:49:19,964 - __main__ - INFO -   - Shaggy Dog, The (1959) (Score: 3.917)
+2025-06-16 20:49:19,964 - __main__ - INFO - LightFM recommendations:
+2025-06-16 20:49:19,965 - __main__ - INFO -   - Transformers: The Movie, The (1986) (Score: -5.529)
+2025-06-16 20:49:19,965 - __main__ - INFO -   - Heavy Metal (1981) (Score: -5.646)
+2025-06-16 20:49:19,965 - __main__ - INFO -   - Hercules (1997) (Score: -5.859)
+2025-06-16 20:49:19,965 - __main__ - INFO -   - Pete's Dragon (1977) (Score: -6.168)
+2025-06-16 20:49:19,965 - __main__ - INFO -   - Congo (1995) (Score: -6.463)
+2025-06-16 20:49:19,965 - __main__ - INFO - 
+Recommendations for User 94:
+2025-06-16 20:49:19,968 - __main__ - INFO - PMF recommendations:
+2025-06-16 20:49:19,968 - __main__ - INFO -   - 12 Angry Men (1957) (Score: 5.000)
+2025-06-16 20:49:19,968 - __main__ - INFO -   - Close Shave, A (1995) (Score: 5.000)
+2025-06-16 20:49:19,968 - __main__ - INFO -   - Chinatown (1974) (Score: 4.991)
+2025-06-16 20:49:19,968 - __main__ - INFO -   - Leaving Las Vegas (1995) (Score: 4.983)
+2025-06-16 20:49:19,969 - __main__ - INFO -   - Graduate, The (1967) (Score: 4.977)
+2025-06-16 20:49:19,969 - __main__ - INFO - BPR recommendations:
+2025-06-16 20:49:19,969 - __main__ - INFO -   - Sex, Lies, and Videotape (1989) (Score: 4.397)
+2025-06-16 20:49:19,969 - __main__ - INFO -   - City Slickers II: The Legend of Curly's Gold (1994) (Score: 3.134)
+2025-06-16 20:49:19,969 - __main__ - INFO -   - Bad Boys (1995) (Score: 2.979)
+2025-06-16 20:49:19,969 - __main__ - INFO -   - Copycat (1995) (Score: 2.900)
+2025-06-16 20:49:19,970 - __main__ - INFO -   - While You Were Sleeping (1995) (Score: 2.813)
+2025-06-16 20:49:19,970 - __main__ - INFO - LightFM recommendations:
+2025-06-16 20:49:19,970 - __main__ - INFO -   - Transformers: The Movie, The (1986) (Score: -11.006)
+2025-06-16 20:49:19,970 - __main__ - INFO -   - Empire Strikes Back, The (1980) (Score: -11.381)
+2025-06-16 20:49:19,970 - __main__ - INFO -   - Heavy Metal (1981) (Score: -11.685)
+2025-06-16 20:49:19,971 - __main__ - INFO -   - Army of Darkness (1993) (Score: -11.967)
+2025-06-16 20:49:19,971 - __main__ - INFO -   - Magnificent Seven, The (1954) (Score: -12.161)
+2025-06-16 20:49:19,971 - __main__ - INFO - 
+======================= STEP 7: Creating Visualizations =======================
+2025-06-16 20:49:19,971 - __main__ - INFO - 
+============================ STEP 9: Saving Results ============================
+2025-06-16 20:49:19,971 - __main__ - INFO - Summary report saved to results/summary_report.md
+2025-06-16 20:49:19,971 - __main__ - INFO - 
+============================== EXECUTION COMPLETE ==============================
+2025-06-16 20:49:19,971 - __main__ - INFO - Total execution time: 0.30 minutes
+2025-06-16 20:49:19,971 - __main__ - INFO - PMF RMSE: 0.9434
+2025-06-16 20:49:19,971 - __main__ - INFO - BPR Precision@10: 0.0167
+2025-06-16 20:49:19,971 - __main__ - INFO - LightFM Precision@10: 0.0222
+2025-06-16 20:49:19,971 - __main__ - INFO - Results saved to: results
+2025-06-16 20:49:19,971 - __main__ - INFO - ================================================================================
+2025-06-16 20:57:38,795 - __main__ - INFO - 
+============ CS 267A - MovieLens Recommender System Implementation ============
+2025-06-16 20:57:38,795 - __main__ - INFO - Baseline: PMF with scikit-surprise
+2025-06-16 20:57:38,795 - __main__ - INFO - Medium Goal: BPR-MF with implicit library
+2025-06-16 20:57:38,795 - __main__ - INFO - Advanced Features: Hyperparameter Tuning, Cross-validation, Ensemble, LightFM
+2025-06-16 20:57:38,795 - __main__ - INFO - ================================================================================
+2025-06-16 20:57:38,798 - __main__ - INFO - 
+===================== STEP 1: Data Loading and Preparation =====================
+2025-06-16 20:57:38,798 - src.data.data_loader - INFO - Loading MovieLens-100K ratings from data/raw/ml-1m...

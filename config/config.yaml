@@ -3,59 +3,71 @@ data:
   movielens_path: "data/raw/ml-100k"
   test_size: 0.2
   min_rating_threshold: 3.0  
-  temporal_split: false      # Use temporal splitting if true
-  stratified_split: false    # Use stratified splitting if true
-  min_train_items: 5         # Minimum items per user in training
-  use_confidence_weights: false  # Use rating values as confidence in implicit
+  temporal_split: false
+  stratified_split: false
+  min_train_items: 5
+  use_confidence_weights: false
   random_state: 42
 
 models:
   pmf:
-    algorithm: "svd"         # Options: "svd", "nmf"
-    n_factors: 50           # Number of latent factors
-    n_epochs: 20            # Number of training epochs
-    learning_rate: 0.005    # Learning rate (lr_all for SVD)
-    regularization: 0.02    # L2 regularization (reg_all for SVD)
-    biased: false           # False for pure PMF
-    reg_pu: null           # User factor regularization (if different)
-    reg_qi: null           # Item factor regularization (if different)
+    algorithm: "svd"
+    n_factors: 50
+    n_epochs: 20
+    learning_rate: 0.005
+    regularization: 0.02
+    biased: false
+    reg_pu: null
+    reg_qi: null
     random_state: 42
     verbose: true
     
   bpr:
-    algorithm: "bpr"        # Options: "bpr", "als", "lmf"
-    factors: 100             # Number of latent factors
-    iterations: 400         # Number of training iterations
-    learning_rate: 0.05     # Learning rate (for BPR/LMF)
-    regularization: 5.0e-4    # L2 regularization
-    num_threads: 0          # 0 = use all available cores
-    dtype: "float32"        # Data type for memory optimization
+    algorithm: "bpr"
+    factors: 100
+    iterations: 400
+    learning_rate: 0.05
+    regularization: 5.0e-4
+    num_threads: 0
+    dtype: "float32"
     random_state: 42
-    verify_negative_samples: false  # For BPR
+    verify_negative_samples: false
+    
+  lightfm:
+    no_components: 100
+    learning_rate: 0.05
+    loss: 'warp'
+    max_sampled: 10
+    item_alpha: 1.0e-6
+    user_alpha: 1.0e-6
+    epochs: 100
+    num_threads: 4  # <-- ADDED THIS LINE
+    random_state: 42
 
 optimization:
-  run_optimization: true   # Set to true to run hyperparameter tuning
-  n_trials: 20            # Number of Optuna trials
-  timeout: 900            # Timeout in seconds (1 hour)
-  n_jobs: 4                # Number of parallel jobs
+  run_optimization: true
+  run_lightfm: true
+  n_trials: 20
+  timeout: 900
+  n_jobs: 4
   
 evaluation:
-  k_values: [5, 10, 20]    # Values of K for Precision@K, Recall@K, etc.
-  max_eval_users: 1000     # Maximum users to evaluate (for efficiency)
-  calc_diversity: true     # Calculate diversity metrics
-  calc_confidence: false   # Calculate confidence intervals (PMF)
+  k_values: [5, 10, 20]
+  max_eval_users: 1000
+  calc_diversity: true
+  calc_confidence: false
   
 output:
   save_models: true
   save_plots: true
-  save_predictions: false  # Save individual predictions
+  save_predictions: false
   results_dir: "results"
   
 advanced:
   ensemble:
-    enabled: false         # Enable ensemble methods
+    enabled: false
     models: ["pmf", "bpr"]
-    method: "weighted"     # Options: "weighted", "stacking"
+    method: "weighted"
   
   cross_validation:
     enabled: false
