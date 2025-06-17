@@ -123,7 +123,30 @@ def main():
         
         # BPR validation data
         # Would need to prepare implicit validation data here
-        # For now, we'll skip BPR tuning in this implementation
+                # ----------------------- BPR validation data -----------------------
+        # Build an implicit (binary) train / val set that mirrors the explicit
+        # split we just made. We reuse the helper already defined in
+        # MovieLensDataLoader.
+        bpr_val_data = data_loader._prepare_implicit_data(
+            data['ratings_df'],          # full DF (needed for id mapping)
+            train_split,                 # implicit-train matrix
+            val_split,                   # implicit-validation “test” matrix
+            threshold=config['data']['min_rating_threshold']
+        )
+
+        # --- Tuning BPR Hyperparameters ---
+        logger.info("\n--- Tuning BPR Hyperparameters ---")
+        best_bpr_params = tuner.tune_bpr(
+            bpr_val_data,               # train_data (implicit)
+            bpr_val_data,               # val_data   (implicit)
+            n_trials=config['optimization'].get('n_trials', 50),
+            n_jobs  =config['optimization'].get('n_jobs',   1)
+        )
+
+        # Update the live config so the **final** BPR model is trained
+        # with the best params we just found.
+        config['models']['bpr'].update(best_bpr_params)
+
         
     else:
         print_separator("STEP 2: Training Models with Default Parameters")
